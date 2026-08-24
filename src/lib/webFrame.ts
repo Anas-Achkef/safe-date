@@ -28,7 +28,20 @@ const CSS = `
     height: 100vh;
     width: 100vw;
   }
-  #root > div {
+  /*
+   * Seul le PREMIER enfant de #root porte l'application.
+   *
+   * Les suivants sont des surcouches injectees par l'outillage de
+   * developpement — menu Expo, indicateur de rechargement. Avec un selecteur
+   * « #root > div », elles recevaient elles aussi le cadre d'appareil et,
+   * #root etant centre en flex, s'affichaient comme un second telephone noir
+   * a cote du vrai, apparaissant et disparaissant au gre des rechargements.
+   *
+   * L'application n'utilise ni Modal ni portail : rien de fonctionnel ne
+   * transite par ces noeuds, on peut donc les masquer. Si un portail est
+   * introduit un jour, cette regle devra etre revue.
+   */
+  #root > div:first-child {
     width: ${deviceFrame.width}px !important;
     height: ${deviceFrame.height}px !important;
     max-height: 100vh;
@@ -37,6 +50,9 @@ const CSS = `
     position: relative;
     border-radius: 20px;
     box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+  }
+  #root > div:not(:first-child) {
+    display: none !important;
   }
   [data-snap="container"] {
     scroll-snap-type: y mandatory;

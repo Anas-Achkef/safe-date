@@ -42,6 +42,8 @@ interface Palette {
   /** Les deux tons du visuel de substitution, en attendant les photos. */
   placeholderFrom: string;
   placeholderTo: string;
+  photoVoile: [string, string];
+  surfaceTranslucide: string;
 }
 
 const PALETTES: Record<PaletteName, Palette> = {
@@ -63,6 +65,8 @@ const PALETTES: Record<PaletteName, Palette> = {
     backdrop: '#DCD6CC',
     placeholderFrom: '#D9E2D2',
     placeholderTo: '#EFE7DA',
+    photoVoile: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.55)'],
+    surfaceTranslucide: 'rgba(255, 255, 255, 0.92)',
   },
 
   /** Aube — crème rosé et terracotta douce. */
@@ -83,6 +87,8 @@ const PALETTES: Record<PaletteName, Palette> = {
     backdrop: '#E0D5CC',
     placeholderFrom: '#F0DCD0',
     placeholderTo: '#F7EFE7',
+    photoVoile: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.55)'],
+    surfaceTranslucide: 'rgba(255, 255, 255, 0.92)',
   },
 
   /** Brume — blanc froid et bleu pâle. */
@@ -103,6 +109,8 @@ const PALETTES: Record<PaletteName, Palette> = {
     backdrop: '#D3DAE1',
     placeholderFrom: '#D6E1EA',
     placeholderTo: '#EDF1F5',
+    photoVoile: ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.55)'],
+    surfaceTranslucide: 'rgba(255, 255, 255, 0.92)',
   },
 };
 

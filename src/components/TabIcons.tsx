@@ -24,6 +24,29 @@ function Frame({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Apprendre — un livre ouvert : on se connaît avant de chercher. */
+export function LearningIcon({ color }: IconProps) {
+  return (
+    <Frame>
+      <Path
+        d="M12 6.8C10.1 5.4 7.6 4.7 4.3 4.7v12.8c3.3 0 5.8.7 7.7 2.1"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M12 6.8c1.9-1.4 4.4-2.1 7.7-2.1v12.8c-3.3 0-5.8.7-7.7 2.1"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <Path d="M12 6.8v12.8" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+    </Frame>
+  );
+}
+
 /** Découverte — un losange : la sélection, la pièce rare. */
 export function DiscoveryIcon({ color }: IconProps) {
   return (

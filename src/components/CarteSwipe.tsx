@@ -91,15 +91,13 @@ export default function CarteSwipe({
         {children}
 
         <Animated.View
-          pointerEvents="none"
-          style={[styles.tampon, styles.tamponGauche, tamponOui]}
+          style={[styles.tampon, styles.tamponGauche, tamponOui, { pointerEvents: 'none' }]}
         >
           <Text style={[styles.tamponTexte, { color: colors.accent }]}>OUI</Text>
         </Animated.View>
 
         <Animated.View
-          pointerEvents="none"
-          style={[styles.tampon, styles.tamponDroite, tamponNon]}
+          style={[styles.tampon, styles.tamponDroite, tamponNon, { pointerEvents: 'none' }]}
         >
           <Text style={[styles.tamponTexte, { color: colors.danger }]}>NON</Text>
         </Animated.View>

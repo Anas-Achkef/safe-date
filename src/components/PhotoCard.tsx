@@ -58,7 +58,7 @@ export function PhotoCard({ photo, firstName, age, score, seed, height }: PhotoC
 
       {/* Voile bas : garantit la lisibilité du prénom quelle que soit l'image. */}
       <LinearGradient
-        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+        colors={colors.photoVoile}
         style={styles.scrim}
       />
 
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   badge: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: colors.surfaceTranslucide,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

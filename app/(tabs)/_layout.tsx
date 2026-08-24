@@ -7,6 +7,7 @@ import {
   ConversationsIcon,
   DatesIcon,
   DiscoveryIcon,
+  LearningIcon,
   ProfileIcon,
 } from '../../src/components/TabIcons';
 import { useSession } from '../../src/hooks/useSession';
@@ -45,6 +46,15 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
+      {/* On apprend ses préférences avant de chercher quelqu'un : l'ordre des
+          onglets suit celui du parcours. */}
+      <Tabs.Screen
+        name="learning"
+        options={{
+          title: 'Apprendre',
+          tabBarIcon: ({ color }) => <LearningIcon color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="discovery"
         options={{
@@ -55,7 +65,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="conversations"
         options={{
-          title: 'Conversations',
+          title: 'Discussions',
           tabBarIcon: ({ color }) => <ConversationsIcon color={color} />,
         }}
       />

@@ -83,7 +83,7 @@ export default function PagesProfil({
 
       {/* Repères de pagination : cliquables, et surtout lisibles. Ils rendent
           visible que l'ordre change d'un profil à l'autre. */}
-      <View style={styles.reperes} pointerEvents="box-none">
+      <View style={[styles.reperes, { pointerEvents: 'box-none' }]}>
         {pages.map((p, i) => (
           <Pressable
             key={p}
@@ -165,7 +165,13 @@ const styles = StyleSheet.create({
   reperes: {
     position: 'absolute',
     right: spacing.lg,
-    top: '50%',
+    // Le conteneur occupe toute la hauteur et centre ses enfants : le
+    // positionnement ne dépend donc plus du nombre de repères ni de la hauteur
+    // du contenu. Avec « top: 50% », c'était le bord supérieur du bloc qui
+    // tombait au milieu, et les repères débordaient sur le texte.
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   repere: {
