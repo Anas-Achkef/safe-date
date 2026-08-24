@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import type { ScoreGroup } from '../types/rpc';
 import type { DureeEcran } from '../types/learning';
 
@@ -30,6 +31,27 @@ export function useConsultation(pages: ScoreGroup[]) {
   const retours = useRef(0);
   const dernier = useRef(Date.now());
   const debut = useRef(Date.now());
+  // Le temps passé hors de l'application n'est pas du temps de lecture : le
+  // compter fausserait la fiabilité que le serveur associe à la répartition.
+  const horsApp = useRef(0);
+  const sortie = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onChange = (etat: AppStateStatus) => {
+      if (etat === 'active') {
+        if (sortie.current !== null) {
+          const absence = Date.now() - sortie.current;
+          horsApp.current += absence;
+          dernier.current += absence;
+          sortie.current = null;
+        }
+      } else if (sortie.current === null) {
+        sortie.current = Date.now();
+      }
+    };
+    const sub = AppState.addEventListener('change', onChange);
+    return () => sub.remove();
+  }, []);
 
   const cloturerPage = useCallback(
     (i: number) => {
@@ -81,7 +103,7 @@ export function useConsultation(pages: ScoreGroup[]) {
       })),
       ordre_consultation: [...ordre.current],
       retours: retours.current,
-      duree_ms: Date.now() - debut.current,
+      duree_ms: Date.now() - debut.current - horsApp.current,
       ecran: pages[index],
     };
   }, [cloturerPage, index, pages]);
@@ -93,6 +115,8 @@ export function useConsultation(pages: ScoreGroup[]) {
     retours.current = 0;
     debut.current = Date.now();
     dernier.current = Date.now();
+    horsApp.current = 0;
+    sortie.current = null;
     setIndex(0);
     entrerPage(0);
   }, [entrerPage]);
