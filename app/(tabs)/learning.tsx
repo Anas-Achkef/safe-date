@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import CarteSwipe from '../../src/components/CarteSwipe';
@@ -48,8 +48,11 @@ export default function MieuxMeConnaitre() {
   const [chargement, setChargement] = useState(true);
 
   const carte = file[0];
-  const pages = carte?.ordre_pages ?? [...ORDRE_DEFAUT];
-  const { index, allerA, releve, reinitialiser } = useConsultation(pages);
+  // Références stables : sans cela le relevé se recrée à chaque rendu, et la
+  // mesure finirait par perturber ce qu'elle observe.
+  const pages = useMemo(() => carte?.ordre_pages ?? [...ORDRE_DEFAUT], [carte?.ordre_pages]);
+  const criteres = useMemo(() => carte?.criteres ?? {}, [carte?.criteres]);
+  const { index, allerA, releve, reinitialiser } = useConsultation(pages, criteres);
 
   const charger = useCallback(async () => {
     try {

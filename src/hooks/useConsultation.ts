@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import type { ScoreGroup } from '../types/rpc';
-import type { DureeEcran } from '../types/learning';
+import type { CritereAffiche, DureeEcran } from '../types/learning';
+
+type CriteresParPage = Partial<Record<Exclude<ScoreGroup, 'physique'>, CritereAffiche[]>>;
 
 export interface ReleveConsultation {
   ecrans: DureeEcran[];
@@ -9,6 +11,8 @@ export interface ReleveConsultation {
   retours: number;
   duree_ms: number;
   ecran: ScoreGroup;
+  criteres_exposes: string[];
+  criteres_consultes: string[];
 }
 
 /**
@@ -24,7 +28,12 @@ export interface ReleveConsultation {
  * le relevé, elle sera calculée côté serveur comme page ignorée par
  * différence avec l'ordre servi.
  */
-export function useConsultation(pages: ScoreGroup[]) {
+function clesDe(criteres: CriteresParPage, page: ScoreGroup): string[] {
+  if (page === 'physique') return [];
+  return (criteres[page] ?? []).map((c) => c.cle);
+}
+
+export function useConsultation(pages: ScoreGroup[], criteres: CriteresParPage = {}) {
   const [index, setIndex] = useState(0);
   const cumul = useRef<Map<ScoreGroup, { duree: number; vues: number }>>(new Map());
   const ordre = useRef<ScoreGroup[]>([]);
@@ -102,11 +111,15 @@ export function useConsultation(pages: ScoreGroup[]) {
         consultations: vues,
       })),
       ordre_consultation: [...ordre.current],
+      // Ouvrir une page vaut consultation de ses critères : c'est la maille la
+      // plus fine que l'interface permette aujourd'hui d'observer honnêtement.
+      criteres_exposes: pages.flatMap((pg) => clesDe(criteres, pg)),
+      criteres_consultes: ordre.current.flatMap((pg) => clesDe(criteres, pg)),
       retours: retours.current,
       duree_ms: Date.now() - debut.current - horsApp.current,
       ecran: pages[index],
     };
-  }, [cloturerPage, index, pages]);
+  }, [cloturerPage, criteres, index, pages]);
 
   /** Remise à zéro entre deux profils. */
   const reinitialiser = useCallback(() => {
