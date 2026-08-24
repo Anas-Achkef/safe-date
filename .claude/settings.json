@@ -1,5 +1,26 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx expo:*)",
+      "Bash(npm run:*)",
+      "Bash(.claude/skills/conventions/verifier.sh)",
+      "Bash(.claude/skills/demarrer/lancer.sh:*)",
+      "Bash(curl -s -o * http://localhost:*)",
+      "Bash(curl -s http://localhost:*)",
+      "Bash(open http://localhost:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(lsof -ti:*)",
+      "Bash(pgrep:*)"
+    ],
+    "ask": [
+      "Bash(npx supabase db push:*)",
+      "Bash(npx supabase migration:*)"
+    ]
   }
 }
