@@ -11,7 +11,6 @@ export interface ReleveConsultation {
   retours: number;
   duree_ms: number;
   ecran: ScoreGroup;
-  criteres_exposes: string[];
   criteres_consultes: string[];
 }
 
@@ -113,7 +112,8 @@ export function useConsultation(pages: ScoreGroup[], criteres: CriteresParPage =
       ordre_consultation: [...ordre.current],
       // Ouvrir une page vaut consultation de ses critères : c'est la maille la
       // plus fine que l'interface permette aujourd'hui d'observer honnêtement.
-      criteres_exposes: pages.flatMap((pg) => clesDe(criteres, pg)),
+      // Les critères exposés ne sont pas envoyés : le serveur les recalcule
+      // depuis la présentation servie, et lui seul en a la version fiable.
       criteres_consultes: ordre.current.flatMap((pg) => clesDe(criteres, pg)),
       retours: retours.current,
       duree_ms: Date.now() - debut.current - horsApp.current,
