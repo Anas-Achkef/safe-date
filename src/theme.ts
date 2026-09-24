@@ -276,6 +276,21 @@ const PALETTES: Record<PaletteName, Palette> = {
 export const colors = PALETTES[ACTIVE_PALETTE];
 
 /**
+ * Décors.
+ *
+ * Des formes posées derrière le contenu, jamais devant : elles réchauffent un
+ * fond crème sans rien signifier. Le halo de l'écran Parcourir en est le seul
+ * exemple pour l'instant — un dégradé radial rose qui déborde par le haut.
+ */
+export const decor = {
+  haloCentre: '#FFDBDB',
+  haloBord: '#FAF5ED',
+  /** Opacité de la forme entière, puis du seul arrêt central. */
+  haloOpacite: 0.6,
+  haloOpaciteCentre: 0.9,
+} as const;
+
+/**
  * Dégradé immersif — accueil, coup de cœur réciproque, rendez-vous confirmé.
  *
  * Figma le pose à 161°, ce qui en coordonnées de `expo-linear-gradient` donne
@@ -330,8 +345,14 @@ export function avatarBlobs(seed: string): { x: number; y: number; r: number; o:
   }));
 }
 
-/** Échelle en multiples de 4. */
+/**
+ * Échelle en multiples de 4.
+ *
+ * `demi` est la seule exception : c'est l'écart entre un libellé et sa
+ * légende, qui doivent se lire comme un seul bloc. À 4 points ils se séparent.
+ */
 export const spacing = {
+  demi: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -353,7 +374,8 @@ export const spacing = {
  */
 export const radius = {
   sm: 12,
-  md: 16,
+  /** Carte interne — un encart pose dans un ecran, pas une carte de profil. */
+  md: 20,
   /** Carte. */
   lg: 24,
   /** Photo. */
@@ -393,6 +415,12 @@ export const composants = {
     traitSelection: 1.5,
     coche: 17,
   },
+  /** Badge Premium des filtres avancés — node 11:735. */
+  badgePremium: {
+    paddingH: 10,
+    paddingV: 5,
+    gap: 10,
+  },
   /** Badge — node 2:143. */
   badge: {
     paddingH: 12,
@@ -411,6 +439,50 @@ export const composants = {
     icone: 24,
     gap: 4,
     flou: 10,
+  },
+  /** Curseur de reglage — nodes 11:704, 11:744. */
+  curseur: {
+    hauteur: 24,
+    rail: 6,
+    poignee: 24,
+    /** Contour corail de la poignee. */
+    anneau: 2,
+  },
+  /** Interrupteur — node 11:730. */
+  interrupteur: {
+    largeur: 52,
+    hauteur: 32,
+    pastille: 26,
+    marge: 3,
+  },
+  /** Bouton rond d'en-tete — nodes 3:97, 11:679. */
+  boutonRond: {
+    cote: 44,
+    icone: 24,
+  },
+  /** Ecran Parcourir — node 3:81. */
+  parcourir: {
+    /** Carte du carrousel d'affinites. */
+    affiniteLargeur: 148,
+    affiniteHauteur: 200,
+    /** Vignette de la grille de proximite. */
+    vignetteLargeur: 166,
+    vignetteHauteur: 212,
+    grilleGapX: 10,
+    grilleGapY: 18,
+    /** Debord du badge de score dans le coin de la photo. */
+    badgeDecalage: 10,
+    /** Retrait du prenom pose sur la photo — il suit la courbe du coin. */
+    prenomGauche: 14,
+    /** Entre la vignette et la ligne d'identite. */
+    vignetteGap: 10,
+    /** Halo decoratif pose derriere l'en-tete. */
+    haloLargeur: 520,
+    haloHauteur: 420,
+    haloGauche: 80,
+    haloHaut: -220,
+    /** Flou pose sur une carte verrouillee. */
+    flouPremium: 9,
   },
   /** Logo — grille Figma de 120 × 124 pour le symbole. */
   logo: {
@@ -494,6 +566,18 @@ export const typography = {
     lineHeight: 40,
     letterSpacing: -0.36,
   },
+  /**
+   * Le mot d'émotion posé en fin de titre — node 3:102.
+   *
+   * Plus gros que le H1 qu'il prolonge, mais sur la même interligne : les deux
+   * lignes doivent se toucher, sinon le titre se casse en deux.
+   */
+  serifTitre: {
+    fontFamily: fonts.serifItalique,
+    fontSize: 40,
+    lineHeight: 36,
+    letterSpacing: -1,
+  },
   /** Chiffre/Grand — 44/46, −3 %. Le pourcentage d'affinité, seul sur sa ligne. */
   chiffre: {
     fontFamily: fonts.titreExtraBold,
@@ -504,6 +588,12 @@ export const typography = {
   /** Texte/Corps — 15/22. */
   body: {
     fontFamily: fonts.corpsRegular,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  /** Texte/Corps fort — 15/22. Le titre d'une ligne de reglage. */
+  bodyFort: {
+    fontFamily: fonts.corpsMedium,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -668,7 +758,8 @@ export const deviceFrame = {
 } as const;
 
 export const layout = {
-  tabBarHeight: 76,
+  /** Doit suivre `composants.barreOnglets.hauteur`. */
+  tabBarHeight: 90,
   /** Hauteur de la barre de marque, en tête de chaque écran. */
   barreNavHeight: 62,
   /** Hauteur de la barre de décision, en bas de la découverte. */
@@ -718,6 +809,7 @@ export const carte = {
 export const theme = {
   colors,
   etats,
+  decor,
   degradeImmersif,
   spacing,
   radius,

@@ -9,14 +9,24 @@
 export { Badge, type TypeBadge } from './Badge';
 export { BarreOnglets, ONGLETS, type OngletId } from './BarreOnglets';
 export { Bouton, type VarianteBouton } from './Bouton';
+export { BoutonRond } from './BoutonRond';
 export { CartePhoto } from './CartePhoto';
+export { CarteAffinite, VignetteProfil } from './CarteProfil';
 export { Chip } from './Chip';
+export { Curseur, CurseurFourchette } from './Curseur';
+export { Halo } from './Halo';
+export { Interrupteur } from './Interrupteur';
 export {
+  IconeCadenas,
   IconeCoeur,
   IconeDecouverte,
   IconeDiscussions,
+  IconeFermer,
+  IconeFiltres,
   IconeHorloge,
   IconeParcourir,
+  IconePhoto,
+  IconePremium,
   IconeProfil,
   IconeRendezVous,
   IconeValider,

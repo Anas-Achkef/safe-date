@@ -75,7 +75,15 @@ export default function RootLayout() {
               headerShown: false,
               contentStyle: { backgroundColor: colors.background },
             }}
-          />
+          >
+            {/* Les filtres montent du bas et couvrent tout, barre d'onglets
+                comprise : seule une route du Stack racine passe par-dessus le
+                navigateur d'onglets. */}
+            <Stack.Screen
+              name="filtres"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+          </Stack>
         </SessionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,17 +1,53 @@
-import { Redirect, Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { Redirect } from 'expo-router';
+// `Tabs` exporté par « expo-router » est déprécié au profit de cette entrée,
+// la seule qui expose aussi le type des propriétés passées à `tabBar`.
+import Tabs, { type BottomTabBarProps } from 'expo-router/js-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '../../src/components/Screen';
 import { StateView } from '../../src/components/StateView';
-import {
-  ConversationsIcon,
-  DatesIcon,
-  DiscoveryIcon,
-  LearningIcon,
-  ProfileIcon,
-} from '../../src/components/TabIcons';
+import { BarreOnglets, ONGLETS, type OngletId } from '../../src/components/ui';
 import { useSession } from '../../src/hooks/useSession';
-import { colors, hairline, layout, spacing, typography } from '../../src/theme';
+import { colors } from '../../src/theme';
+
+/**
+ * Les cinq onglets.
+ *
+ * La barre est dessinée par `BarreOnglets`, qui ne connaît ni `expo-router`
+ * ni son état : elle reçoit l'onglet actif et rend un choix. Tout le
+ * branchement tient dans l'adaptateur ci-dessous — c'est ce qui permet de la
+ * montrer seule dans la planche de contrôle, et de la remplacer sans toucher
+ * aux écrans.
+ */
+
+/** Les routes, dans l'ordre des onglets du système de design. */
+const ROUTES: Record<OngletId, string> = {
+  parcourir: 'learning',
+  decouverte: 'discovery',
+  discussions: 'conversations',
+  rendezVous: 'dates',
+  profil: 'profile',
+};
+
+function Adaptateur({ state, navigation }: BottomTabBarProps) {
+  const marges = useSafeAreaInsets();
+  const routeActive = state.routes[state.index].name;
+  const actif =
+    (Object.keys(ROUTES) as OngletId[]).find((id) => ROUTES[id] === routeActive) ?? 'parcourir';
+
+  return (
+    <BarreOnglets
+      actif={actif}
+      basSur={marges.bottom}
+      onChoisir={(id) => {
+        const cible = ROUTES[id];
+        // `navigate` plutôt que `jumpTo` : il replace l'onglet sur sa racine
+        // quand on le retouche, ce qu'on attend d'une barre d'onglets.
+        if (cible !== routeActive) navigation.navigate(cible);
+      }}
+    />
+  );
+}
 
 export default function TabsLayout() {
   const { accountState } = useSession();
@@ -34,75 +70,19 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <Adaptateur {...props} />}
       screenOptions={{
         headerShown: false,
-        // L'onglet actif se signale par la couleur du trait, jamais par une
-        // pastille ni un fond plein.
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabLabel,
-        tabBarItemStyle: styles.tabItem,
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      {/* On apprend ses préférences avant de chercher quelqu'un : l'ordre des
-          onglets suit celui du parcours. */}
-      <Tabs.Screen
-        name="learning"
-        options={{
-          title: 'Apprendre',
-          tabBarIcon: ({ color }) => <LearningIcon color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="discovery"
-        options={{
-          title: 'Découverte',
-          tabBarIcon: ({ color }) => <DiscoveryIcon color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="conversations"
-        options={{
-          title: 'Discussions',
-          tabBarIcon: ({ color }) => <ConversationsIcon color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="dates"
-        options={{
-          title: 'Rendez-vous',
-          tabBarIcon: ({ color }) => <DatesIcon color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
-        }}
-      />
+      {ONGLETS.map((onglet) => (
+        <Tabs.Screen
+          key={onglet.id}
+          name={ROUTES[onglet.id]}
+          options={{ title: onglet.libelle }}
+        />
+      ))}
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.rule,
-    borderTopWidth: hairline,
-    // La barre native pose une ombre par défaut : elle n'a rien à faire ici.
-    elevation: 0,
-    boxShadow: 'none',
-    height: layout.tabBarHeight,
-    paddingTop: spacing.sm,
-  },
-  tabItem: {
-    paddingVertical: spacing.xs,
-  },
-  tabLabel: {
-    ...typography.tabLabel,
-    marginTop: spacing.xs,
-  },
-});

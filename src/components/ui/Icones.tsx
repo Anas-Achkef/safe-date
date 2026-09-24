@@ -228,3 +228,111 @@ export function IconeHorloge({ couleur, taille = composants.badge.icone }: Icone
     </Svg>
   );
 }
+
+/** Réglages — node 3:98. Ouvre le panneau de filtres. */
+export function IconeFiltres({ couleur, taille = composants.boutonRond.icone }: IconeProps) {
+  return (
+    <Cadre taille={taille}>
+      <Path
+        d="M21 4H14M10 4H3M21 12H12M8 12H3M21 20H16M12 20H3M14 2V6M8 10V14M16 18V22"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Cadre>
+  );
+}
+
+/** Croix de fermeture — node 11:680. */
+export function IconeFermer({ couleur, taille = composants.boutonRond.icone }: IconeProps) {
+  return (
+    <Cadre taille={taille}>
+      <Path
+        d="M18 6L6 18"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M6 6L18 18"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Cadre>
+  );
+}
+
+/** Cadenas — node 3:131. Marque un profil que l'abonnement seul révèle. */
+export function IconeCadenas({ couleur, taille = composants.barreOnglets.icone }: IconeProps) {
+  return (
+    <Cadre taille={taille}>
+      <Path
+        d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Cadre>
+  );
+}
+
+/**
+ * Appareil photo — node 3:106.
+ *
+ * Marque l'emplacement d'une photo absente. Il ne s'affiche jamais par-dessus
+ * une vraie photographie : c'est un repli, pas une décoration.
+ */
+export function IconePhoto({ couleur, taille = 29 }: IconeProps) {
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 28.8 28.8" fill="none" opacity={0.7}>
+      <Path
+        d="M17.4 4.8H11.4L8.4 8.4H4.8C4.16348 8.4 3.55303 8.65286 3.10294 9.10294C2.65286 9.55303 2.4 10.1635 2.4 10.8V21.6C2.4 22.2365 2.65286 22.847 3.10294 23.2971C3.55303 23.7471 4.16348 24 4.8 24H24C24.6365 24 25.247 23.7471 25.6971 23.2971C26.1471 22.847 26.4 22.2365 26.4 21.6V10.8C26.4 10.1635 26.1471 9.55303 25.6971 9.10294C25.247 8.65286 24.6365 8.4 24 8.4H20.4L17.4 4.8Z"
+        stroke={couleur}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M14.4 19.2C16.3882 19.2 18 17.5882 18 15.6C18 13.6118 16.3882 12 14.4 12C12.4118 12 10.8 13.6118 10.8 15.6C10.8 17.5882 12.4118 19.2 14.4 19.2Z"
+        stroke={couleur}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Étoile filante du badge Premium — node 11:736, grille de 14,4. */
+export function IconePremium({ couleur, taille = 15 }: IconeProps) {
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 14.4 14.4" fill="none">
+      <Path
+        d="M6.9372 1.9596C6.9631 1.91256 7.00114 1.87334 7.04737 1.84602C7.0936 1.8187 7.14631 1.80429 7.2 1.80429C7.25369 1.80429 7.30641 1.8187 7.35263 1.84602C7.39886 1.87334 7.4369 1.91256 7.4628 1.9596L9.234 5.322C9.27624 5.39986 9.33519 5.4674 9.40663 5.51977C9.47806 5.57214 9.5602 5.60805 9.64716 5.62492C9.73412 5.64178 9.82373 5.63918 9.90956 5.61731C9.9954 5.59543 10.0753 5.55482 10.1436 5.4984L12.7098 3.3C12.7591 3.25993 12.8198 3.23653 12.8832 3.23316C12.9466 3.22979 13.0094 3.24663 13.0627 3.28125C13.1159 3.31587 13.1568 3.36649 13.1794 3.42581C13.202 3.48514 13.2053 3.55012 13.1886 3.6114L11.4882 9.759C11.4535 9.8848 11.3787 9.99585 11.2752 10.0753C11.1717 10.1548 11.0451 10.1984 10.9146 10.1994H3.486C3.3554 10.1985 3.22867 10.155 3.12504 10.0755C3.0214 9.99602 2.94654 9.8849 2.9118 9.759L1.212 3.612C1.19535 3.55072 1.19857 3.48574 1.2212 3.42641C1.24384 3.36709 1.28471 3.31647 1.33794 3.28185C1.39117 3.24723 1.45401 3.23039 1.51742 3.23376C1.58083 3.23713 1.64154 3.26053 1.6908 3.3006L4.2564 5.499C4.32468 5.55543 4.4046 5.59603 4.49044 5.61791C4.57627 5.63978 4.66588 5.64238 4.75284 5.62552C4.8398 5.60865 4.92194 5.57274 4.99338 5.52037C5.06481 5.468 5.12376 5.40046 5.166 5.3226L6.9372 1.9596Z"
+        stroke={couleur}
+        strokeWidth={0.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3 12.6H11.4"
+        stroke={couleur}
+        strokeWidth={0.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
