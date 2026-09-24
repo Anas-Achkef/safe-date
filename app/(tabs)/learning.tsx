@@ -19,7 +19,7 @@ import { usePremium } from '../../src/hooks/usePremium';
 import { filtrerProfils } from '../../src/lib/filtrage';
 import { isPreviewMode } from '../../src/preview';
 import { attributsDemo } from '../../src/preview/attributs';
-import { colors, composants, layout, spacing, typography } from '../../src/theme';
+import { colors, composants, spacing, typography } from '../../src/theme';
 import { compterFiltres, FILTRES_PAR_DEFAUT } from '../../src/types/filtres';
 
 /**
@@ -227,9 +227,7 @@ const styles = StyleSheet.create({
   marge: { paddingHorizontal: spacing.gutter },
   contenu: {
     paddingTop: spacing.sm,
-    // La barre d'onglets est translucide et posée par-dessus : sans cette
-    // réserve, la dernière rangée de la grille passe dessous.
-    paddingBottom: layout.tabBarHeight + spacing.xxl,
+    paddingBottom: spacing.giant,
     gap: spacing.xxl,
   },
 

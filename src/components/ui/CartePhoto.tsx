@@ -31,10 +31,16 @@ interface CartePhotoProps {
   prenom: string | null;
   /** Hauteur en points. À défaut, la carte suit son rapport. */
   hauteur?: number;
-  /** Rapport largeur / hauteur, quand la hauteur n'est pas imposée. */
-  rapport?: number;
-  /** Rayon des coins. 32 par défaut, le rayon photo du système. */
-  rayon?: number;
+  /**
+   * Rapport largeur / hauteur, quand la hauteur n'est pas imposée.
+   * `null` laisse le parent décider — la carte remplit alors sa place.
+   */
+  rapport?: number | null;
+  /**
+   * Rayon des coins. 32 par défaut, le rayon photo du système.
+   * `null` n'en pose aucun : à l'appelant de dessiner ses propres coins.
+   */
+  rayon?: number | null;
   /** Faux pour une photo sans rien posé dessus. */
   voile?: boolean;
   /** Ce qui se pose sur la photo : badges, prénom, actions. */
@@ -60,8 +66,12 @@ export function CartePhoto({
     <View
       style={[
         styles.carte,
-        { borderRadius: rayon },
-        hauteur === undefined ? { aspectRatio: rapport } : { height: hauteur },
+        rayon === null ? null : { borderRadius: rayon },
+        hauteur !== undefined
+          ? { height: hauteur }
+          : rapport !== null
+            ? { aspectRatio: rapport }
+            : null,
         style,
       ]}
     >

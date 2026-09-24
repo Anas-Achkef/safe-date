@@ -288,6 +288,23 @@ export const decor = {
   /** Opacité de la forme entière, puis du seul arrêt central. */
   haloOpacite: 0.6,
   haloOpaciteCentre: 0.9,
+  /** Lueur posée sur le dégradé immersif, derrière les deux portraits. */
+  lueurCentre: '#FFE0E6',
+  lueurOpaciteCentre: 0.5,
+  /** Ombre portée des portraits, sur fond de dégradé. */
+  ombrePortrait: '0 16px 36px rgba(13, 13, 51, 0.3)',
+  /** Ombre de la pastille du cœur. */
+  ombreCoeur: '0 10px 24px rgba(229, 77, 102, 0.4)',
+  /** Encart translucide posé sur une photo, pour y glisser une phrase. */
+  voileSurPhoto: 'rgba(255, 255, 255, 0.16)',
+  /**
+   * Le fond de page, rendu transparent.
+   *
+   * Sert au fondu sous une barre d'actions flottante : la même couleur que
+   * `colors.background`, à opacité nulle. Un `transparent` nu virerait au noir
+   * pendant l'interpolation sur certains moteurs.
+   */
+  fondTransparent: 'rgba(250, 244, 238, 0)',
 } as const;
 
 /**
@@ -484,6 +501,49 @@ export const composants = {
     /** Flou pose sur une carte verrouillee. */
     flouPremium: 9,
   },
+  /** Ecran Decouverte — node 3:350. */
+  decouverte: {
+    /** Marge laterale de la carte : plus etroite que la gouttiere. */
+    marge: 16,
+    /** Epaisseur des segments de l'indicateur de photos. */
+    segment: 3,
+    segmentGap: 6,
+    /** Bouton rond « Passer », plus grand que celui des en-tetes. */
+    actionCote: 56,
+    /** Encart « En commun » pose sur la photo. */
+    inciseRayon: 16,
+    incisePaddingH: 14,
+    incisePaddingV: 10,
+    flouIncise: 8,
+  },
+  /** Fiche profil — node 9:605. */
+  fiche: {
+    /** Hauteur de la photo principale, coins bas arrondis. */
+    photoHauteur: 540,
+    photoRayon: 36,
+    /** Carte d'une dimension d'affinite. */
+    dimensionPaddingH: 14,
+    dimensionPaddingV: 16,
+    /** Barre de progression sous le chiffre. */
+    barre: 5,
+    /** Photo supplementaire, en bas de fiche. */
+    photoSuiteHauteur: 420,
+    photoSuiteRayon: 28,
+  },
+  /** Coup de coeur reciproque — node 10:632. */
+  coupDeCoeur: {
+    portrait: 150,
+    /** Contour blanc de chaque portrait. */
+    contour: 5,
+    /** Inclinaison, en degres, de part et d'autre. */
+    inclinaison: 8,
+    /** Recouvrement des deux portraits. */
+    chevauchement: 36,
+    /** Pastille du coeur, posee a cheval sous les deux. */
+    pastille: 64,
+    pastilleIcone: 29,
+    lueur: 460,
+  },
   /** Logo — grille Figma de 120 × 124 pour le symbole. */
   logo: {
     largeur: 120,
@@ -584,6 +644,45 @@ export const typography = {
     fontSize: 44,
     lineHeight: 46,
     letterSpacing: -1.32,
+  },
+  /** Chiffre/Moyen — 22/26, −1 %. Le score d'une dimension, dans sa carte. */
+  chiffreMoyen: {
+    fontFamily: fonts.titreBold,
+    fontSize: 22,
+    lineHeight: 26,
+    letterSpacing: -0.22,
+  },
+  /**
+   * Le mot d'émotion de l'écran plein — node 10:658.
+   *
+   * Plus grand que le chiffre qu'il prolonge, sur la même interligne : les deux
+   * mots forment une seule ligne, « C'est » puis « réciproque ».
+   */
+  serifEcran: {
+    fontFamily: fonts.serifItalique,
+    fontSize: 54,
+    lineHeight: 48,
+    letterSpacing: -1.32,
+  },
+  /** Le chiffre qui porte cette même ligne. */
+  chiffreEcran: {
+    fontFamily: fonts.titreExtraBold,
+    fontSize: 44,
+    lineHeight: 48,
+    letterSpacing: -1.32,
+  },
+  /** Citation en commun, dans sa carte poudre — node 9:668. */
+  serifCitation: {
+    fontFamily: fonts.serifItalique,
+    fontSize: 24,
+    lineHeight: 28,
+    letterSpacing: -0.24,
+  },
+  /** La même citation, glissée dans une ligne — node 3:410. */
+  serifIncise: {
+    fontFamily: fonts.serifItalique,
+    fontSize: 18,
+    lineHeight: 22,
   },
   /** Texte/Corps — 15/22. */
   body: {

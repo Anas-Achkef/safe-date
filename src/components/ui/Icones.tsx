@@ -336,3 +336,40 @@ export function IconePremium({ couleur, taille = 15 }: IconeProps) {
     </Svg>
   );
 }
+
+/** Chevron de retour — node 9:622. */
+export function IconeRetour({ couleur, taille = composants.boutonRond.icone }: IconeProps) {
+  return (
+    <Cadre taille={taille}>
+      <Path
+        d="M15 18L9 12L15 6"
+        stroke={couleur}
+        strokeWidth={TRAIT}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Cadre>
+  );
+}
+
+/**
+ * Cœur plein — node 10:654.
+ *
+ * Distinct de `IconeCoeur`, qui n'est qu'un tracé : celui-ci est rempli, et
+ * n'apparaît qu'au moment du coup de cœur réciproque. Un cœur plein ailleurs
+ * banaliserait le seul écran qui le mérite.
+ */
+export function IconeCoeurPlein({ couleur, taille = 29 }: IconeProps) {
+  return (
+    <Svg width={taille} height={taille} viewBox="0 0 28.8 28.8" fill="none">
+      <Path
+        d="M22.8 16.8C24.588 15.048 26.4 12.948 26.4 10.2C26.4 8.44957 25.7046 6.77084 24.4669 5.5331C23.2292 4.29536 21.5504 3.6 19.8 3.6C17.688 3.6 16.2 4.2 14.4 6C12.6 4.2 11.112 3.6 9 3.6C7.24957 3.6 5.57084 4.29536 4.3331 5.5331C3.09536 6.77084 2.4 8.44957 2.4 10.2C2.4 12.96 4.2 15.06 6 16.8L14.4 25.2L22.8 16.8Z"
+        fill={couleur}
+        stroke={couleur}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

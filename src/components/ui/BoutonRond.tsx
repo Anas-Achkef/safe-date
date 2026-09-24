@@ -21,16 +21,33 @@ interface BoutonRondProps {
   libelle: string;
   /** Nombre affiché en pastille. `0` ou absent : pas de pastille. */
   compte?: number;
+  /**
+   * Côté du disque. 44 en en-tête d'écran, 56 pour une action de décision —
+   * qui porte alors un contour plus épais, à la mesure de son poids.
+   */
+  taille?: 'entete' | 'action';
   style?: StyleProp<ViewStyle>;
 }
 
-export function BoutonRond({ onPress, icone, libelle, compte = 0, style }: BoutonRondProps) {
+export function BoutonRond({
+  onPress,
+  icone,
+  libelle,
+  compte = 0,
+  taille = 'entete',
+  style,
+}: BoutonRondProps) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={compte > 0 ? `${libelle} (${compte} actifs)` : libelle}
       onPress={onPress}
-      style={({ pressed }) => [styles.bouton, pressed ? styles.appuye : null, style]}
+      style={({ pressed }) => [
+        styles.bouton,
+        taille === 'action' ? styles.action : null,
+        pressed ? styles.appuye : null,
+        style,
+      ]}
     >
       {icone(colors.textPrimary)}
       {compte > 0 ? (
@@ -54,6 +71,11 @@ const styles = StyleSheet.create({
     borderColor: colors.rule,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  action: {
+    width: composants.decouverte.actionCote,
+    height: composants.decouverte.actionCote,
+    borderWidth: composants.bouton.trait,
   },
   appuye: { opacity: opacity.pressed },
   pastille: {

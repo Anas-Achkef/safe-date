@@ -1,5 +1,7 @@
+import { demo, isPreviewMode } from '../preview';
 import { supabase } from '../lib/supabase';
 import { toApiError } from './errors';
+import { rpcAVenir } from './rpcAVenir';
 
 /**
  * Decisions prises sur les profils.
@@ -45,4 +47,28 @@ export async function recordDecision(input: DecisionInput): Promise<void> {
   });
 
   if (error) throw toApiError(error, 'Enregistrement du choix');
+}
+
+/**
+ * La personne visée s'était-elle déjà prononcée favorablement ?
+ *
+ * Appelée juste après un « Ça m'intéresse » : si les deux sens existent, les
+ * deux se sont choisis et l'application montre le coup de cœur réciproque.
+ *
+ * La fonction n'existe pas encore en base — voir `db/004-reciprocite.sql`.
+ * Tant qu'elle est absente, `rpcAVenir` rend `null` et la réponse est « pas de
+ * réciprocité » : l'écran de découverte enchaîne alors sur le profil suivant,
+ * ce qui est exactement le comportement actuel. Rien ne casse en attendant.
+ *
+ * On ne lit pas `swipe_decisions` directement pour cela : sa policy ne montre
+ * que ses propres lignes, et c'est délibéré — savoir qui s'est prononcé sur
+ * vous ne doit sortir que lorsque la réciprocité est acquise des deux côtés.
+ */
+export async function reciprociteAvec(targetId: string): Promise<boolean> {
+  if (isPreviewMode) return demo.reciprocite(targetId);
+
+  const lignes = await rpcAVenir<{ reciproque: boolean }>('reciprocite_avec', {
+    cible: targetId,
+  });
+  return lignes?.[0]?.reciproque === true;
 }
