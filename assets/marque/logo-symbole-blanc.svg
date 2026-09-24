@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="120" height="124" viewBox="0 0 120 124" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Logo/Symbole blanc">
+<ellipse id="Ombre" opacity="0.35" cx="60" cy="117.5" rx="32" ry="4.5" fill="white"/>
+<path id="C&#197;&#147;ur" d="M60 106C60 106 7 72 7 36C7 17 21 5 37 5C48 5 55 11 60 19C65 11 72 5 83 5C99 5 113 17 113 36C113 72 60 106 60 106Z" stroke="white" stroke-width="9" stroke-linejoin="round"/>
+<circle id="Personne gauche t&#195;&#170;te" cx="38" cy="37.5" r="8.5" fill="white"/>
+<path id="Personne gauche buste" d="M28 59C28 53.4772 32.4772 49 38 49V49C43.5228 49 48 53.4772 48 59V70C48 71.6569 46.6569 73 45 73H31C29.3431 73 28 71.6569 28 70V59Z" fill="white"/>
+<circle id="Personne droite t&#195;&#170;te" cx="82" cy="37.5" r="8.5" fill="white"/>
+<path id="Personne droite buste" d="M72 59C72 53.4772 76.4772 49 82 49V49C87.5228 49 92 53.4772 92 59V70C92 71.6569 90.6569 73 89 73H75C73.3431 73 72 71.6569 72 70V59Z" fill="white"/>
+<path id="Cloche" d="M45 62C45 60.2928 45.388 58.6023 46.1418 57.0251C46.8956 55.4479 48.0005 54.0148 49.3934 52.8076C50.7863 51.6004 52.4399 50.6429 54.2598 49.9896C56.0796 49.3363 58.0302 49 60 49C61.9698 49 63.9204 49.3363 65.7403 49.9896C67.5601 50.6429 69.2137 51.6005 70.6066 52.8076C71.9995 54.0148 73.1044 55.4479 73.8582 57.0251C74.612 58.6024 75 60.2928 75 62L60 62L45 62Z" fill="white"/>
+<circle id="Bouton cloche" cx="60" cy="48" r="3" fill="white"/>
+<rect id="Plateau" x="41" y="62.5" width="38" height="4" rx="2" fill="white"/>
+</g>
+</svg>
