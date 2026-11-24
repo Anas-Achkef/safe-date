@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
+import { Avatar } from './Avatar';
 import { colors, radius, spacing, typography } from '../theme';
 
 interface PhotoCardProps {
@@ -24,36 +25,12 @@ interface PhotoCardProps {
  * `photo` sera renseigné, l'image prend simplement la place du dégradé.
  */
 export function PhotoCard({ photo, firstName, age, score, seed, height }: PhotoCardProps) {
-  const initial = firstName?.trim().charAt(0).toUpperCase() ?? null;
-
-  // Le dégradé pivote légèrement selon le profil : deux cartes voisines ne se
-  // ressemblent pas tout à fait.
-  const tilt = (seed.charCodeAt(0) + seed.charCodeAt(seed.length - 1)) % 3;
-  const starts: [number, number][] = [
-    [0, 0],
-    [1, 0],
-    [0.3, 0],
-  ];
-
   return (
     <View style={[styles.card, { height }]}>
       {photo ? (
         <Image source={{ uri: photo }} style={styles.image} resizeMode="cover" />
       ) : (
-        <LinearGradient
-          colors={[colors.placeholderFrom, colors.placeholderTo]}
-          start={{ x: starts[tilt][0], y: starts[tilt][1] }}
-          end={{ x: 1, y: 1 }}
-          style={styles.image}
-        >
-          {initial ? (
-            <View style={styles.initialWrap}>
-              <Text style={styles.initial} allowFontScaling={false}>
-                {initial}
-              </Text>
-            </View>
-          ) : null}
-        </LinearGradient>
+        <Avatar seed={seed} firstName={firstName} style={styles.image} rounded="lg" />
       )}
 
       {/* Voile bas : garantit la lisibilité du prénom quelle que soit l'image. */}
@@ -97,15 +74,6 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  initialWrap: {
-    opacity: 0.35,
-  },
-  initial: {
-    fontFamily: typography.name.fontFamily,
-    fontSize: 96,
-    color: colors.textPrimary,
-    includeFontPadding: false,
   },
   scrim: {
     position: 'absolute',

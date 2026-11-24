@@ -5,10 +5,10 @@ import { StateView } from '../src/components/StateView';
 import { useSession } from '../src/hooks/useSession';
 
 /**
- * Aiguillage d'entree.
+ * Aiguillage d'entrée.
  *
- * Trois etats possibles apres relecture de la session persistee :
- * pas de session, compte non active, compte actif.
+ * La séquence d'ouverture est portée par le layout racine : elle doit jouer
+ * quelle que soit l'adresse par laquelle on entre, pas seulement par « / ».
  */
 export default function Index() {
   const { accountState } = useSession();
@@ -16,7 +16,7 @@ export default function Index() {
   if (accountState === 'loading') {
     return (
       <Screen>
-        <StateView variant="loading" title="Chargement…" />
+        <StateView variant="loading" title="Chargement" />
       </Screen>
     );
   }

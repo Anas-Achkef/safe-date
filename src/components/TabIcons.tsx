@@ -24,25 +24,16 @@ function Frame({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Apprendre — un livre ouvert : on se connaît avant de chercher. */
+/** Parcourir — une mosaïque : on voit beaucoup de monde d'un coup. */
 export function LearningIcon({ color }: IconProps) {
   return (
     <Frame>
       <Path
-        d="M12 6.8C10.1 5.4 7.6 4.7 4.3 4.7v12.8c3.3 0 5.8.7 7.7 2.1"
+        d="M4.2 4.2h6.1v6.1H4.2zM13.7 4.2h6.1v6.1h-6.1zM4.2 13.7h6.1v6.1H4.2zM13.7 13.7h6.1v6.1h-6.1z"
         stroke={color}
         strokeWidth={STROKE}
         strokeLinejoin="round"
-        strokeLinecap="round"
       />
-      <Path
-        d="M12 6.8c1.9-1.4 4.4-2.1 7.7-2.1v12.8c-3.3 0-5.8.7-7.7 2.1"
-        stroke={color}
-        strokeWidth={STROKE}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      <Path d="M12 6.8v12.8" stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
     </Frame>
   );
 }

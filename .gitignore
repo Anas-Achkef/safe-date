@@ -46,3 +46,9 @@ node_modules
 .env.local
 supabase/.temp
 dist
+
+# Lien du projet Vercel (identifiants de projet, pas de secret)
+.vercel/
+
+# Captures de la maquette : portraits de personnes reelles, usage interne
+captures/

@@ -1,6 +1,7 @@
 import { signPhotoPaths } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import type {
+  ResumeConversation,
   ChatRequestStatus,
   DateIntent,
   DemandeRecue,
@@ -12,6 +13,7 @@ import type {
 import type { RencontreType } from '../types/learning';
 import type { ScoreGroup } from '../types/rpc';
 import { toApiError } from './errors';
+import { demo, isPreviewMode } from '../preview';
 
 /**
  * Onglet « Conversations ».
@@ -39,6 +41,7 @@ function num(value: number | null | undefined): number | null {
  * quand elles disparaissent, pas a l'ecran de les filtrer.
  */
 export async function loadInbox(): Promise<DemandeRecue[]> {
+  if (isPreviewMode) return demo.boiteReception();
   const { data, error } = await (supabase.rpc as any)('boite_reception');
   if (error) throw toApiError(error, 'Chargement des demandes');
 
@@ -66,6 +69,7 @@ export async function loadInbox(): Promise<DemandeRecue[]> {
 
 /** Emet une demande vers un profil. Renvoie son identifiant. */
 export async function createRequest(cible: string): Promise<string> {
+  if (isPreviewMode) return `demande-${cible}`;
   const { data, error } = await (supabase.rpc as any)('creer_demande', { cible });
   if (error) throw toApiError(error, 'Envoi de la demande');
   return data as string;
@@ -79,6 +83,7 @@ export async function createRequest(cible: string): Promise<string> {
  * vraiment la demande.
  */
 export async function openRequest(demande: string): Promise<ChatRequestStatus> {
+  if (isPreviewMode) return demo.ouvrirDemande(demande);
   const { data, error } = await (supabase.rpc as any)('ouvrir_demande', { demande });
   if (error) throw toApiError(error, 'Ouverture de la demande');
   return data as ChatRequestStatus;
@@ -94,6 +99,7 @@ export async function answerRequest(
   demande: string,
   reponse: DateIntent,
 ): Promise<string | null> {
+  if (isPreviewMode) return demo.repondreDemande(demande, reponse);
   const { data, error } = await (supabase.rpc as any)('repondre_demande', {
     demande,
     reponse,
@@ -144,6 +150,7 @@ export async function joinConversation(conversation: string): Promise<void> {
 export async function loadConversationState(
   conversation: string,
 ): Promise<EtatConversation | null> {
+  if (isPreviewMode) return demo.etatConversation(conversation);
   const { data, error } = await (supabase.rpc as any)('etat_conversation', {
     conversation,
   });
@@ -168,6 +175,7 @@ export async function loadMessages(
   conversation: string,
   depuis?: string,
 ): Promise<Message[]> {
+  if (isPreviewMode) return demo.messages(conversation);
   // `messages` n'est pas encore dans les types generes : meme cast que pour
   // les RPC, a retirer a la prochaine regeneration de database.ts.
   let requete = (supabase.from as any)('messages')
@@ -189,6 +197,7 @@ export async function loadMessages(
  * conversation et les regles de contenu avant d'ecrire.
  */
 export async function sendMessage(args: EnvoyerMessageArgs): Promise<string> {
+  if (isPreviewMode) return demo.envoyerMessage(args.conversation_id, args.body ?? '');
   const { data, error } = await (supabase.rpc as any)('envoyer_message', {
     conv: args.conversation_id,
     p_kind: (args.kind ?? 'texte') as MessageKind,
@@ -198,4 +207,25 @@ export async function sendMessage(args: EnvoyerMessageArgs): Promise<string> {
   });
   if (error) throw toApiError(error, 'Envoi du message');
   return data as string;
+}
+
+/**
+ * Liste mes conversations.
+ *
+ * Aucune RPC ne rend ce service aujourd'hui : `boite_reception` ne sert que
+ * les demandes et `etat_conversation` exige de connaitre l'identifiant a
+ * l'avance. Il manque une fonction `mes_conversations()` cote base — voir
+ * `ResumeConversation` dans `src/types/conversations.ts`.
+ *
+ * En attendant, l'ecran affiche une liste vide en conditions reelles plutot
+ * que de tomber en erreur : le manque se voit, il ne casse rien.
+ */
+export async function listConversations(): Promise<ResumeConversation[]> {
+  if (isPreviewMode) return demo.mesConversations();
+  return [];
+}
+
+/** Marque un fil comme lu a son ouverture. */
+export async function markConversationRead(conversation: string): Promise<void> {
+  if (isPreviewMode) return demo.marquerLu(conversation);
 }

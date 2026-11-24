@@ -16,10 +16,6 @@ export function Highlights({ items }: { items: CandidateHighlight[] }) {
 
   return (
     <View style={styles.block}>
-      <Text style={styles.title} allowFontScaling={false}>
-        CE QUE VOUS PARTAGEZ
-      </Text>
-
       <View style={styles.list}>
         {items.map((item, index) => (
           <View key={`${item.question}-${index}`} style={styles.item}>
@@ -39,10 +35,6 @@ export function Highlights({ items }: { items: CandidateHighlight[] }) {
 const styles = StyleSheet.create({
   block: {
     gap: spacing.md,
-  },
-  title: {
-    ...typography.overline,
-    color: colors.textMuted,
   },
   list: {
     gap: spacing.sm,

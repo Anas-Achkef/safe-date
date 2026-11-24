@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-na
 import { signInWithEmail } from '../../src/api/auth';
 import { userFacingMessage } from '../../src/api/errors';
 import { Button } from '../../src/components/Button';
+import { MarqueSafeDate } from '../../src/components/MarqueSafeDate';
 import { Screen } from '../../src/components/Screen';
 import { TextField } from '../../src/components/TextField';
 import { colors, spacing, typography } from '../../src/theme';
@@ -30,7 +31,14 @@ export default function SignIn() {
   };
 
   return (
-    <Screen title="Se connecter" subtitle="Retrouve ton compte Safe Date.">
+    <Screen>
+      <View style={styles.marque}>
+        <MarqueSafeDate taille={56} />
+        <Text style={styles.marqueNom}>Safe Date</Text>
+        <Text style={styles.marqueTitre}>Se connecter</Text>
+        <Text style={styles.marqueSous}>Retrouve ton compte Safe Date.</Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.form}
@@ -78,6 +86,10 @@ export default function SignIn() {
 }
 
 const styles = StyleSheet.create({
+  marque: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.xxl },
+  marqueNom: { ...typography.display, color: colors.textPrimary, includeFontPadding: false },
+  marqueTitre: { ...typography.heading, color: colors.textPrimary, marginTop: spacing.md },
+  marqueSous: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   form: {
     gap: spacing.lg,
   },

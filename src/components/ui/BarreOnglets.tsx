@@ -107,7 +107,10 @@ export function BarreOnglets({ actif, onChoisir, basSur = 0, style }: BarreOngle
 
 const styles = StyleSheet.create({
   barre: {
-    height: composants.barreOnglets.hauteur,
+    // `minHeight` et non `height` : la marge de l'indicateur d'accueil
+    // s'ajoute à la barre au lieu de rogner la rangée d'icônes, qui perdrait
+    // ses libellés sur un iPhone.
+    minHeight: composants.barreOnglets.hauteur,
     paddingTop: composants.barreOnglets.paddingTop,
     borderTopWidth: hairline,
     borderTopColor: colors.rule,

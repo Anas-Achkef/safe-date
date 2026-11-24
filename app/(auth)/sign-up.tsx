@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-na
 import { signUpWithEmail } from '../../src/api/auth';
 import { userFacingMessage } from '../../src/api/errors';
 import { Button } from '../../src/components/Button';
+import { MarqueSafeDate } from '../../src/components/MarqueSafeDate';
 import { Screen } from '../../src/components/Screen';
 import { TextField } from '../../src/components/TextField';
 import { colors, spacing, typography } from '../../src/theme';
@@ -42,7 +43,14 @@ export default function SignUp() {
   const passwordTooShort = password.length > 0 && password.length < MIN_PASSWORD_LENGTH;
 
   return (
-    <Screen title="Créer un compte" subtitle="Quelques secondes suffisent.">
+    <Screen>
+      <View style={styles.marque}>
+        <MarqueSafeDate taille={56} />
+        <Text style={styles.marqueNom}>Safe Date</Text>
+        <Text style={styles.marqueTitre}>Créer un compte</Text>
+        <Text style={styles.marqueSous}>Quelques secondes suffisent.</Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.form}
@@ -92,6 +100,10 @@ export default function SignUp() {
 }
 
 const styles = StyleSheet.create({
+  marque: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.xxl },
+  marqueNom: { ...typography.display, color: colors.textPrimary, includeFontPadding: false },
+  marqueTitre: { ...typography.heading, color: colors.textPrimary, marginTop: spacing.md },
+  marqueSous: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   form: {
     gap: spacing.lg,
   },

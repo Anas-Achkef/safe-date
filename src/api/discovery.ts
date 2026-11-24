@@ -1,3 +1,4 @@
+import { demo, isPreviewMode } from '../preview';
 import { signPhotoPaths } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import type { CandidateCardRow, CandidateHighlight } from '../types/rpc';
@@ -76,6 +77,7 @@ function classify(row: CandidateCardRow): {
  * on se contente de constater les champs absents.
  */
 export async function loadDiscoveryFeed(): Promise<DiscoveryEntry[]> {
+  if (isPreviewMode) return demo.decouverte();
   const { data, error } = await supabase.rpc('candidate_cards');
   if (error) throw toApiError(error, 'Chargement des profils');
 

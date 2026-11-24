@@ -37,7 +37,7 @@ import { colors, spacing } from '../src/theme';
  * d'abord en police système produirait un saut visible.
  */
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, erreurPolices] = useFonts({
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
@@ -52,7 +52,10 @@ export default function RootLayout() {
     installWebFrame();
   }, []);
 
-  if (!fontsLoaded) {
+  // Une police absente dégrade la typographie ; elle ne doit pas retenir
+  // l'application indéfiniment sur un écran vide. On attend le chargement,
+  // mais pas au-delà d'un échec : l'interface s'affiche alors en repli.
+  if (!fontsLoaded && !erreurPolices) {
     return <View style={styles.blank} />;
   }
 

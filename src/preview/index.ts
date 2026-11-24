@@ -13,3 +13,4 @@
 export const isPreviewMode = process.env.EXPO_PUBLIC_PREVIEW === '1';
 
 export * from './fixtures';
+export * as demo from './etat';

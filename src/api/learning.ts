@@ -1,4 +1,5 @@
 import { signPhotoPaths } from '../lib/storage';
+import { demo, isPreviewMode } from '../preview';
 import { supabase } from '../lib/supabase';
 import type {
   CarteApprentissage,
@@ -20,6 +21,7 @@ import { toApiError } from './errors';
 
 /** Charge une page du fil et signe les photos. */
 export async function loadLearningFeed(taille = 10): Promise<CarteApprentissage[]> {
+  if (isPreviewMode) return demo.filApprentissage(taille);
   const { data, error } = await (supabase.rpc as any)('fil_apprentissage', { taille });
   if (error) throw toApiError(error, 'Chargement des profils');
 
@@ -55,6 +57,7 @@ export async function loadLearningFeed(taille = 10): Promise<CarteApprentissage[
  * jamais d'un compteur tenu côté application.
  */
 export async function submitSwipe(args: EnregistrerSwipeArgs): Promise<string | null> {
+  if (isPreviewMode) return demo.noterSwipe(args.cible);
   const { data, error } = await (supabase.rpc as any)('enregistrer_swipe', {
     cible: args.cible,
     garder: args.garder,
@@ -76,6 +79,7 @@ export async function submitSwipe(args: EnregistrerSwipeArgs): Promise<string | 
 
 /** La sollicitation en attente, ou `null`. Jamais plus d'une à la fois. */
 export async function loadPendingFocus(): Promise<Sollicitation | null> {
+  if (isPreviewMode) return demo.sollicitationEnAttente();
   const { data, error } = await (supabase.rpc as any)('focus_en_attente');
   if (error) throw toApiError(error, 'Chargement de la question');
   const rows = (data ?? []) as Sollicitation[];
@@ -93,6 +97,7 @@ export async function answerFocus(
   options: number[] | null,
   categorie?: string,
 ): Promise<void> {
+  if (isPreviewMode) return demo.repondreSollicitation();
   const { error } = await (supabase.rpc as any)('repondre_focus', {
     focus,
     options: options && options.length > 0 ? options : null,
@@ -102,6 +107,7 @@ export async function answerFocus(
 }
 
 export async function loadSessionState(): Promise<EtatSession> {
+  if (isPreviewMode) return demo.etatSession();
   const { data, error } = await (supabase.rpc as any)('etat_session');
   if (error) throw toApiError(error, 'État de la session');
   const rows = (data ?? []) as EtatSession[];
@@ -110,6 +116,7 @@ export async function loadSessionState(): Promise<EtatSession> {
 
 /** Clôture la session et relève le niveau de connaissance du jour. */
 export async function closeSession(): Promise<FinDeSession | null> {
+  if (isPreviewMode) return demo.finDeSession();
   const { data, error } = await (supabase.rpc as any)('cloturer_session');
   if (error) throw toApiError(error, 'Clôture de la session');
   const rows = (data ?? []) as FinDeSession[];

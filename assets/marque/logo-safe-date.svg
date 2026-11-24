@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="currentColor" role="img" aria-label="Safe Date">
+  <circle cx="30" cy="26" r="13" fill="none" stroke="currentColor" stroke-width="7"/>
+  <path d="M20 82 L80 14" stroke="currentColor" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <path d="M70 88 L57 66 A 15 15 0 1 1 83 66 Z M75.5 57 A 5.5 5.5 0 1 1 64.5 57 A 5.5 5.5 0 1 1 75.5 57 Z" fill-rule="evenodd"/>
+</svg>

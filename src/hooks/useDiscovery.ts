@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadDiscoveryFeed, type DiscoveryEntry } from '../api/discovery';
 import { fetchDecidedIds, recordDecision } from '../api/decisions';
 import { userFacingMessage } from '../api/errors';
-import { isPreviewMode, PREVIEW_DISCOVERY } from '../preview';
+import { demo, isPreviewMode } from '../preview';
 
 interface DiscoveryState {
   entries: DiscoveryEntry[];
@@ -36,7 +36,7 @@ export function useDiscovery(): DiscoveryState {
 
   const load = useCallback(async (isRefresh: boolean) => {
     if (isPreviewMode) {
-      setEntries(PREVIEW_DISCOVERY);
+      setEntries(demo.decouverte());
       setLoading(false);
       setRefreshing(false);
       return;
@@ -97,7 +97,10 @@ export function useDiscovery(): DiscoveryState {
 
       void (async () => {
         try {
-          if (!isPreviewMode) {
+          if (isPreviewMode) {
+            // Le profil ne doit pas revenir au rechargement suivant.
+            demo.noterDecision(candidateId);
+          } else {
             await recordDecision({ targetId: candidateId, interested, durationMs });
           }
         } catch (err) {

@@ -61,6 +61,20 @@ export function toApiError(error: PostgrestError | Error, context: string): ApiE
   return new ApiError('unknown', `${context} : ${message}`, code, error);
 }
 
+/**
+ * Vrai quand la fonction n'existe pas encore cote base.
+ *
+ * Sert a distinguer « le back-end ne sait pas encore faire ca » d'une vraie
+ * panne : le premier cas se replie silencieusement, le second se signale.
+ */
+export function estErreurAbsenceFonction(e: unknown): boolean {
+  if (e instanceof ApiError) return e.kind === 'missing_function';
+  if (typeof e === 'object' && e !== null && 'code' in e) {
+    return String((e as { code: unknown }).code) === PGRST_MISSING_FUNCTION;
+  }
+  return false;
+}
+
 /** Message court, affichable tel quel dans l'interface. */
 export function userFacingMessage(error: unknown): string {
   if (error instanceof ApiError) {

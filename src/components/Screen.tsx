@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { isPreviewMode } from '../preview';
 import { colors, spacing, typography } from '../theme';
+import { BarreNav } from './BarreNav';
 
 interface ScreenProps {
   title?: string;
@@ -11,9 +12,20 @@ interface ScreenProps {
   children: ReactNode;
   /** Supprime le rembourrage horizontal : la vue gère elle-même ses marges. */
   flush?: boolean;
+  /** Ce qui se place à droite de la barre de marque. */
+  navDroite?: ReactNode;
+  /** Masque la barre de marque, pour les écrans qui portent déjà le logo. */
+  sansNav?: boolean;
 }
 
-export function Screen({ title, subtitle, children, flush = false }: ScreenProps) {
+export function Screen({
+  title,
+  subtitle,
+  children,
+  flush = false,
+  navDroite,
+  sansNav = false,
+}: ScreenProps) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       {isPreviewMode ? (
@@ -23,6 +35,8 @@ export function Screen({ title, subtitle, children, flush = false }: ScreenProps
           </Text>
         </View>
       ) : null}
+
+      {sansNav ? null : <BarreNav droite={navDroite} />}
 
       {title || subtitle ? (
         <View style={styles.header}>

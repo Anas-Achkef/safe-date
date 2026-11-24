@@ -1,0 +1,5 @@
+# Maquette de démonstration Safe Date — non destinée à l'indexation.
+# Les visages affichés proviennent d'une banque de substitution : ils ne
+# doivent pas se retrouver dans un index de moteur de recherche.
+User-agent: *
+Disallow: /

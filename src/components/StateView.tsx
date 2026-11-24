@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, opacity, radius, spacing, typography } from '../theme';
+import { Loader } from './Loader';
 
 interface StateViewProps {
   variant: 'loading' | 'empty' | 'error';
@@ -13,7 +14,7 @@ interface StateViewProps {
 export function StateView({ variant, title, message, actionLabel, onAction }: StateViewProps) {
   return (
     <View style={styles.container}>
-      {variant === 'loading' ? <ActivityIndicator color={colors.accent} /> : null}
+      {variant === 'loading' ? <Loader /> : null}
 
       <Text style={styles.title} allowFontScaling={false}>
         {title}
