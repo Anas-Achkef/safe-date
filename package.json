@@ -42,9 +42,10 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "conventions": ".claude/skills/conventions/verifier.sh",
-    "verif": "npm run typecheck && npm run conventions",
+    "verif": "npm run typecheck && npm test && npm run conventions",
     "deploy": "./deployer.sh",
-    "deploy:apercu": "./deployer.sh --apercu"
+    "deploy:apercu": "./deployer.sh --apercu",
+    "test": "node --experimental-strip-types --test \"tests/**/*.test.mjs\""
   },
   "private": true
 }
