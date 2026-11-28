@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import {
   answerRequest,
@@ -15,6 +15,7 @@ import { CarteRendezVous } from '../../src/components/CarteRendezVous';
 import { Screen } from '../../src/components/Screen';
 import { StateView } from '../../src/components/StateView';
 import { usePosition } from '../../src/hooks/usePosition';
+import { formaterChrono } from '../../src/lib/conversationLive';
 import { isPreviewMode } from '../../src/preview';
 import {
   distanceMetres,
@@ -59,6 +60,23 @@ function formaterDelai(secondes: number): string {
   return `${minutes} min restante${minutes > 1 ? 's' : ''}`;
 }
 
+/** Ou en est la conversation, en une ligne. */
+function sousTitre(f: ResumeConversation): string {
+  if (f.illimitee) return f.dernier_message ?? 'Conversation ouverte';
+  switch (f.statut) {
+    case 'prete':
+      return 'Votre conversation vous attend';
+    case 'active':
+      return f.secondes_restantes !== null
+        ? `En cours · ${formaterChrono(f.secondes_restantes)}`
+        : (f.dernier_message ?? 'En cours');
+    case 'verrouillee':
+      return 'Le temps est écoulé';
+    case 'cloturee':
+      return 'Conversation close';
+  }
+}
+
 export default function Discussions() {
   const [demandes, setDemandes] = useState<DemandeRecue[]>([]);
   const [fils, setFils] = useState<ResumeConversation[]>([]);
@@ -88,9 +106,12 @@ export default function Discussions() {
     }
   }, []);
 
-  useEffect(() => {
-    void charger();
-  }, [charger]);
+  // Au retour d'une conversation, la liste doit montrer son nouvel etat.
+  useFocusEffect(
+    useCallback(() => {
+      void charger();
+    }, [charger]),
+  );
 
   const ouvrir = useCallback(
     async (demande: DemandeRecue) => {
@@ -216,14 +237,9 @@ export default function Discussions() {
                     {f.autre_en_ligne ? <View style={styles.enLigne} /> : null}
                   </View>
                   <Text style={styles.filApercu} numberOfLines={1}>
-                    {f.dernier_message ?? 'Conversation ouverte'}
+                    {sousTitre(f)}
                   </Text>
                 </View>
-                {f.non_lus > 0 ? (
-                  <View style={styles.compteur}>
-                    <Text style={styles.compteurTexte}>{f.non_lus}</Text>
-                  </View>
-                ) : null}
               </Pressable>
             ))}
           </View>
@@ -675,16 +691,6 @@ const styles = StyleSheet.create({
   filAge: { ...typography.body, color: colors.textMuted },
   enLigne: { width: 8, height: 8, borderRadius: radius.pill, backgroundColor: colors.accent },
   filApercu: { ...typography.caption, color: colors.textSecondary },
-  compteur: {
-    minWidth: 22,
-    height: 22,
-    paddingHorizontal: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compteurTexte: { ...typography.caption, color: colors.onAccent },
 
   liste: {
     paddingHorizontal: spacing.lg,

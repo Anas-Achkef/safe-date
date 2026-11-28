@@ -133,10 +133,10 @@ Trois fichiers, appliqués dans cet ordre par le responsable.
 - `etat_conversation` renvoie de quoi savoir où en est le parcours : nombre
   de messages de chacun avant le chrono, et à qui c'est le tour. Le libellé
   `message` suit les nouvelles étapes.
-- Une fonction `mes_conversations()` remplace la liste vide : une ligne par
-  conversation de l'appelant, aux champs de `ResumeConversation`
-  (`src/types/conversations.ts`). Prénom, âge et photo de l'autre ne sont pas
-  lisibles directement (RLS de `profiles`) : la fonction les sert.
+- La liste est construite côté application à partir des lectures directes de
+  `conversations` et `messages` (policies existantes) et d'`etat_conversation` ;
+  `mes_conversations()` n'est plus nécessaire. Âge et photo de l'autre restent
+  indisponibles (RLS de `profiles`) et valent `null`.
 
 **`db/0xx-notifications.sql`**
 - Table `push_tokens` : une ligne par appareil (`user_id`, `token`, `plateforme`,
@@ -176,7 +176,7 @@ seulement, jamais dans l'application.
 ### 3. Application
 
 **`src/api/conversations.ts`** — seul point d'appel au serveur :
-`listConversations` branché sur `mes_conversations()` ; `joinConversation` déjà
+`listConversations` construit à partir des lectures directes (étape 1) ; `joinConversation` déjà
 écrit ; `signalPresence()` ajouté ; `loadConversationState` lit les nouveaux
 champs. **`src/api/notifications.ts`** (nouveau) : `registerDevice()`.
 
@@ -223,7 +223,7 @@ par son propriétaire. Ce n'est pas l'une des trois exceptions vérifiées de
 1. **Application seule, sur le back-end actuel** : présence, rafraîchissement,
    compte à rebours, décision de fin. Utile immédiatement : la conversation
    démarre quand les deux sont là.
-2. Propositions SQL `messages-avant-chrono` et `mes_conversations`, puis
+2. Propositions SQL `messages-avant-chrono` et la RPC de décision de fin, puis
    l'application qui les utilise.
 3. Notifications : SQL, Edge Function, build de développement, application.
    **Attend la création des comptes Expo et Apple.** D'ici là, les étapes de
@@ -244,7 +244,7 @@ Chaque étape est livrable seule.
 - **Pas de compteur de messages non lus** dans cette version : rien en base ne
   sait ce qui a été lu. `non_lus` est retiré de `ResumeConversation`.
 - **Conversations illimitées** (rouvertes après un rendez-vous,
-  `illimitee = true`) : `mes_conversations()` expose le drapeau ; l'écran les
+  `illimitee = true`) : `listConversations` et `loadConversationState` lisent le drapeau dans `conversations` ; l'écran les
   affiche sans compte à rebours ni verrouillage.
 - **Décision de fin par une RPC**, conformément à `AGENTS.md`, plutôt que par
   écriture directe dans `conversation_decisions` : elle rejoint l'étape 2 de
