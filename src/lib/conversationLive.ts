@@ -20,8 +20,16 @@ export type EtapeConversation =
 /** Le serveur ne compte une presence que 45 s : on la renouvelle bien avant. */
 export const INTERVALLE_PRESENCE_MS = 15_000;
 
-export function intervalleRafraichissement(statut: ConversationStatus): number {
-  return statut === 'active' ? 3_000 : 10_000;
+/**
+ * Plus frequent pendant les 5 minutes, et des que l'autre est la : c'est le
+ * moment ou le chrono peut partir, et la personne qui attendait doit le voir
+ * aussitot.
+ */
+export function intervalleRafraichissement(
+  statut: ConversationStatus,
+  autreEnLigne = false,
+): number {
+  return statut === 'active' || (statut === 'prete' && autreEnLigne) ? 3_000 : 10_000;
 }
 
 export function restantSecondes(
@@ -30,7 +38,10 @@ export function restantSecondes(
   maintenant: number,
 ): number | null {
   if (serveur === null) return null;
-  return Math.max(0, serveur - Math.floor((maintenant - recuA) / 1000));
+  // Une lecture peut arriver juste avant le tic d'affichage : le temps ecoule
+  // ne devient jamais negatif, sinon le chrono remonterait d'une seconde.
+  const ecoule = Math.max(0, maintenant - recuA);
+  return Math.max(0, serveur - Math.floor(ecoule / 1000));
 }
 
 export function formaterChrono(secondes: number): string {
@@ -68,4 +79,19 @@ export function fusionnerMessages(actuels: Message[], nouveaux: Message[]): Mess
   for (const m of actuels) parId.set(m.id, m);
   for (const m of nouveaux) parId.set(m.id, m);
   return [...parId.values()].sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+/** Duree des 5 minutes cote serveur (`conversation_duree_s`). */
+export const DUREE_CONVERSATION_S = 300;
+
+/**
+ * Fin du decompte 3, 2, 1, deduite du temps servi par le serveur.
+ *
+ * Le serveur fait partir les 5 minutes quelques secondes apres le demarrage :
+ * tant qu'il reste plus de 300 s, on est dans le decompte. C'est ce qui donne
+ * le meme 3, 2, 1 aux deux personnes, y compris a celle qui attendait.
+ */
+export function decompteDepuisServeur(secondes: number | null, recuA: number): number | null {
+  if (secondes === null || secondes <= DUREE_CONVERSATION_S) return null;
+  return recuA + (secondes - DUREE_CONVERSATION_S) * 1000;
 }

@@ -7,6 +7,7 @@ import {
   intervalleRafraichissement,
   restantSecondes,
   INTERVALLE_PRESENCE_MS,
+  decompteDepuisServeur,
 } from '../src/lib/conversationLive.ts';
 
 const base = { statut: 'active', illimitee: false, restant: 120, decompteJusqua: null, decisionEnvoyee: false };
@@ -61,4 +62,24 @@ test('fusionnerMessages dédoublonne et trie', () => {
     m('0', '2026-11-28T09:59:59Z'),
   ]);
   assert.deepEqual(r.map((x) => x.id), ['0', '1', '2', '3']);
+});
+
+test('restantSecondes ignore une lecture plus récente que l’horloge d’affichage (I-3)', () => {
+  // Entre la lecture et le tic suivant, maintenant < recuA : le chrono ne doit pas remonter.
+  assert.equal(restantSecondes(120, 5_000, 4_000), 120);
+});
+
+test('intervalleRafraichissement accélère quand l’autre est là (I-1)', () => {
+  assert.equal(intervalleRafraichissement('prete', true), 3_000);
+  assert.equal(intervalleRafraichissement('prete', false), 10_000);
+  assert.equal(intervalleRafraichissement('active', false), 3_000);
+});
+
+test('decompteDepuisServeur : les deux voient le même 3, 2, 1 (I-1)', () => {
+  // Le serveur fait partir les 5 minutes 3 s après le démarrage : 303 s restantes.
+  assert.equal(decompteDepuisServeur(303, 10_000), 13_000);
+  assert.equal(decompteDepuisServeur(301, 10_000), 11_000);
+  assert.equal(decompteDepuisServeur(300, 10_000), null);
+  assert.equal(decompteDepuisServeur(120, 10_000), null);
+  assert.equal(decompteDepuisServeur(null, 10_000), null);
 });

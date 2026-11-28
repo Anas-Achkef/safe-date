@@ -8,9 +8,11 @@ import {
   loadConversationState,
   loadMessages,
   sendMessage,
+  signalPresence,
 } from '../api/conversations';
 import { userFacingMessage } from '../api/errors';
 import {
+  decompteDepuisServeur,
   etapeDe,
   fusionnerMessages,
   INTERVALLE_PRESENCE_MS,
@@ -56,25 +58,38 @@ export function useConversationLive(id: string): {
   const [premierPlan, setPremierPlan] = useState(AppState.currentState === 'active');
   const [focus, setFocus] = useState(false);
 
-  // Le dernier message connu, lu par les relectures sans les recreer.
+  // Le dernier message connu et le statut, lus par les relectures sans les recreer.
   const filRef = useRef<Message[]>([]);
   filRef.current = fil;
+  const statutRef = useRef<EtatConversation['statut'] | null>(null);
+  statutRef.current = etat?.statut ?? null;
+  // Numero de la derniere lecture lancee : une reponse plus ancienne qu'une
+  // autre deja appliquee est ignoree, sinon un etat « prete » perime pourrait
+  // ecraser « active » juste apres le demarrage.
+  const sequence = useRef(0);
 
   const relire = useCallback(async () => {
     if (!id) return;
+    const numero = (sequence.current += 1);
     try {
       const dernier = filRef.current[filRef.current.length - 1]?.created_at;
       const [e, nouveaux] = await Promise.all([
         loadConversationState(id),
         loadMessages(id, dernier),
       ]);
+      if (numero !== sequence.current) return;
+      const t = Date.now();
       setEtat(e);
-      setRecuA(Date.now());
+      setRecuA(t);
+      setMaintenant(t);
+      // Les deux personnes voient le meme 3, 2, 1, y compris celle qui attendait.
+      const fin = decompteDepuisServeur(e?.secondes_restantes ?? null, t);
+      if (fin !== null) setDecompteJusqua(fin);
       setFil((actuels) => fusionnerMessages(actuels, nouveaux));
       setErreur(null);
     } catch (e) {
       // On garde ce qui est affiche : une coupure ne doit rien effacer.
-      setErreur(userFacingMessage(e));
+      if (numero === sequence.current) setErreur(userFacingMessage(e));
     } finally {
       setChargement(false);
     }
@@ -82,10 +97,17 @@ export function useConversationLive(id: string): {
 
   const signaler = useCallback(async () => {
     if (!id) return;
+    // `rejoindre_conversation` ne met pas a jour la presence lue par
+    // `etat_conversation` : sans ce signal, chacun verrait l'autre « Hors
+    // ligne » apres 45 s, meme en pleine conversation.
+    signalPresence().catch(() => {});
     try {
       const r = await joinConversation(id);
       if (r?.demarree) {
         setDecompteJusqua(Date.now() + r.decompte_s * 1000);
+        void relire();
+      } else if (r?.statut === 'active' && statutRef.current === 'prete') {
+        // L'autre vient de faire partir le chrono : on le lit tout de suite.
         void relire();
       }
     } catch {
@@ -107,10 +129,13 @@ export function useConversationLive(id: string): {
 
   const actif = focus && premierPlan;
   const statut = etat?.statut ?? 'prete';
+  const autreEnLigne = etat?.autre_en_ligne ?? false;
 
   // Presence et premiere lecture, des que l'ecran est au premier plan.
   useEffect(() => {
     if (!actif) return;
+    // L'horloge d'affichage a pu dormir : on la remet a l'heure avant tout.
+    setMaintenant(Date.now());
     void signaler();
     void relire();
     const presence = setInterval(() => void signaler(), INTERVALLE_PRESENCE_MS);
@@ -120,14 +145,19 @@ export function useConversationLive(id: string): {
   // Relecture, plus frequente pendant les 5 minutes.
   useEffect(() => {
     if (!actif) return;
-    const lecture = setInterval(() => void relire(), intervalleRafraichissement(statut));
+    const lecture = setInterval(
+      () => void relire(),
+      intervalleRafraichissement(statut, autreEnLigne),
+    );
     return () => clearInterval(lecture);
-  }, [actif, statut, relire]);
+  }, [actif, statut, autreEnLigne, relire]);
 
-  // Une seconde d'affichage pour le chrono et le decompte.
+  // Horloge d'affichage du chrono et du decompte. Un quart de seconde : avec un
+  // tic par seconde, son retard variable sur les lectures faisait sauter des
+  // secondes au chrono et durer le « 3 » du decompte.
   useEffect(() => {
     if (!actif) return;
-    const tic = setInterval(() => setMaintenant(Date.now()), 1000);
+    const tic = setInterval(() => setMaintenant(Date.now()), 250);
     return () => clearInterval(tic);
   }, [actif]);
 
