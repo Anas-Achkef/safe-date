@@ -1,0 +1,73 @@
+{
+ "population": 15000,
+ "observateurs": 200,
+ "paires": 556043,
+ "msParPaire": 0.82,
+ "partFiltresOk": 0.053,
+ "partAffichable": 0.05,
+ "centileVeriteDesEcartes": 0.495,
+ "partEcartesDansLeMeilleurDecile": 0.096,
+ "scoreGlobal": {
+  "p0": 13.3,
+  "p10": 32.6,
+  "p25": 36.8,
+  "p50": 41.9,
+  "p75": 47.1,
+  "p90": 52,
+  "p99": 60.3,
+  "p100": 78.2
+ },
+ "partAuDessusDe85": 0,
+ "partAuDessusDe70": 0.0002,
+ "criteresEvalues": {
+  "n": 556043,
+  "mediane": 99,
+  "q1": 99,
+  "q3": 99
+ },
+ "spearman": {
+  "global": {
+   "n": 193,
+   "mediane": 0.609,
+   "q1": 0.536,
+   "q3": 0.672
+  },
+  "brut": {
+   "n": 193,
+   "mediane": 0.646,
+   "q1": 0.574,
+   "q3": 0.707
+  },
+  "aller": {
+   "n": 193,
+   "mediane": 0.591,
+   "q1": 0.511,
+   "q3": 0.655
+  },
+  "physique": {
+   "n": 193,
+   "mediane": 0.327,
+   "q1": 0.234,
+   "q3": 0.438
+  },
+  "valeurs": {
+   "n": 193,
+   "mediane": 0.593,
+   "q1": 0.501,
+   "q3": 0.676
+  },
+  "mode_vie": {
+   "n": 193,
+   "mediane": 0.407,
+   "q1": 0.301,
+   "q3": 0.489
+  }
+ },
+ "precisionTop20": {
+  "moteur": 0.511,
+  "etalonBrut": 0.523,
+  "hasard": 0.1,
+  "observateurs": 179
+ },
+ "centileMoyenTop20": 0.829
+}

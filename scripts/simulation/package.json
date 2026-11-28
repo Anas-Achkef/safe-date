@@ -1,0 +1,11 @@
+{
+  "name": "safe-date-simulation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulation locale du moteur de compatibilité de Safe Date sur une population fictive.",
+  "type": "module",
+  "dependencies": {
+    "@electric-sql/pglite": "0.6.0",
+    "@electric-sql/pglite-postgis": "0.3.0"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "20260810113855_m10_salle_attente_conversation.sql": "alter type public.conversation_status add value if not exists 'prete';",
+  "20260810115523_m11_questions_intermediaires.sql": "alter type public.focus_context add value if not exists 'erreur_prediction'; alter type public.focus_context add value if not exists 'question_intermediaire';"
+}

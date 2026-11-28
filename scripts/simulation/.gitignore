@@ -1,0 +1,3 @@
+# Dépendances et bases locales : rien de tout cela ne va dans le dépôt.
+node_modules/
+donnees/
