@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,25 +12,21 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  loadConversationState,
-  loadMessages,
-  markConversationRead,
-  sendMessage,
-} from '../../src/api/conversations';
-import { userFacingMessage } from '../../src/api/errors';
 import { Avatar } from '../../src/components/Avatar';
+import { DecisionFin } from '../../src/components/DecisionFin';
 import { StateView } from '../../src/components/StateView';
+import { useConversationLive } from '../../src/hooks/useConversationLive';
 import { useSession } from '../../src/hooks/useSession';
+import { formaterChrono } from '../../src/lib/conversationLive';
 import { demo, isPreviewMode } from '../../src/preview';
 import { colors, hairline, radius, spacing, typography } from '../../src/theme';
-import type { EtatConversation, Message } from '../../src/types/conversations';
 
 /**
- * Le fil d'une conversation.
+ * Le fil d'une conversation de 5 minutes.
  *
- * Le compte a rebours vient du serveur et n'est jamais recalcule ici : une
- * conversation qui expire le fait pour tout le monde au meme instant.
+ * Le temps restant vient du serveur et n'est que decompte ici entre deux
+ * lectures : une conversation qui expire le fait pour les deux au meme
+ * instant. Le chrono ne part que lorsque les deux sont sur cet ecran.
  */
 
 function heure(iso: string): string {
@@ -38,61 +34,32 @@ function heure(iso: string): string {
   return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-function delai(secondes: number | null): string | null {
-  if (secondes === null) return null;
-  if (secondes <= 0) return 'Conversation expirée';
-  const h = Math.floor(secondes / 3600);
-  if (h >= 24) return `${Math.floor(h / 24)} j restants`;
-  if (h >= 1) return `${h} h restantes`;
-  return `${Math.max(1, Math.floor(secondes / 60))} min restantes`;
-}
-
 export default function Conversation() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useSession();
-  const [etat, setEtat] = useState<EtatConversation | null>(null);
-  const [fil, setFil] = useState<Message[]>([]);
+  const live = useConversationLive(id ?? '');
   const [brouillon, setBrouillon] = useState('');
-  const [chargement, setChargement] = useState(true);
-  const [erreur, setErreur] = useState<string | null>(null);
   const defilement = useRef<ScrollView>(null);
 
   const moi = isPreviewMode ? demo.MOI : (session?.user.id ?? '');
-
-  const charger = useCallback(async () => {
-    if (!id) return;
-    try {
-      const [e, m] = await Promise.all([loadConversationState(id), loadMessages(id)]);
-      setEtat(e);
-      setFil(m);
-      await markConversationRead(id);
-    } catch (e) {
-      setErreur(userFacingMessage(e));
-    } finally {
-      setChargement(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    void charger();
-  }, [charger]);
+  const { etat, fil, etape, restant } = live;
+  const saisieOuverte = etape === 'active' || etape === 'illimitee';
+  const finie = etape === 'temps_ecoule' || etape === 'decision_envoyee';
 
   const envoyer = useCallback(async () => {
     const corps = brouillon.trim();
-    if (!corps || !id) return;
+    if (!corps || !saisieOuverte) return;
     setBrouillon('');
-    try {
-      await sendMessage({ conversation_id: id, kind: 'texte', body: corps });
-      await charger();
+    const ok = await live.envoyer(corps);
+    if (ok) {
       // Le nouveau message doit etre visible sans geste supplementaire.
       requestAnimationFrame(() => defilement.current?.scrollToEnd({ animated: true }));
-    } catch (e) {
-      setErreur(userFacingMessage(e));
+    } else {
       setBrouillon(corps);
     }
-  }, [brouillon, charger, id]);
+  }, [brouillon, live, saisieOuverte]);
 
-  if (chargement) {
+  if (live.chargement && !etat) {
     return (
       <SafeAreaView style={styles.page} edges={['top', 'left', 'right']}>
         <StateView variant="loading" title="Chargement" />
@@ -106,7 +73,7 @@ export default function Conversation() {
         <StateView
           variant="error"
           title="Conversation introuvable"
-          message={erreur ?? 'Ce fil n’existe plus.'}
+          message={live.erreur ?? 'Ce fil n’existe plus.'}
           actionLabel="Retour"
           onAction={() => router.back()}
         />
@@ -114,7 +81,21 @@ export default function Conversation() {
     );
   }
 
-  const restant = delai(etat.secondes_restantes);
+  const decompte =
+    etape === 'decompte' && live.decompteJusqua !== null
+      ? Math.max(1, Math.ceil((live.decompteJusqua - Date.now()) / 1000))
+      : null;
+
+  // En apercu, l'autre dit toujours oui : le resultat suit ma reponse.
+  const resultat =
+    isPreviewMode && live.decision !== null && id
+      ? demo.decisionDe(id) === 'oui'
+        ? ('reciproque' as const)
+        : ('pas_cette_fois' as const)
+      : null;
+
+  const consigne =
+    etape === 'attente' ? etat.message : etape === 'close' ? 'Conversation close.' : null;
 
   return (
     <SafeAreaView style={styles.page} edges={['top', 'left', 'right']}>
@@ -127,64 +108,83 @@ export default function Conversation() {
           <Text style={styles.prenom} numberOfLines={1}>
             {etat.prenom_autre}
           </Text>
-          <Text style={styles.statut}>
-            {etat.autre_en_ligne ? 'En ligne' : (restant ?? 'Hors ligne')}
-          </Text>
+          <Text style={styles.statut}>{etat.autre_en_ligne ? 'En ligne' : 'Hors ligne'}</Text>
         </View>
+        {etape === 'active' && restant !== null ? (
+          <Text style={styles.chrono}>{formaterChrono(restant)}</Text>
+        ) : null}
       </View>
 
-      {etat.message ? (
+      {consigne ? (
         <View style={styles.consigne}>
-          <Text style={styles.consigneTexte}>{etat.message}</Text>
+          <Text style={styles.consigneTexte}>{consigne}</Text>
         </View>
       ) : null}
 
-      <KeyboardAvoidingView
-        style={styles.corps}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          ref={defilement}
-          contentContainerStyle={styles.fil}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => defilement.current?.scrollToEnd({ animated: false })}
-        >
-          {fil.map((m) => {
-            const demoi = m.sender_id === moi;
-            return (
-              <View key={m.id} style={[styles.bulleRangee, demoi && styles.bulleRangeeMoi]}>
-                <View style={[styles.bulle, demoi ? styles.bulleMoi : styles.bulleAutre]}>
-                  <Text style={[styles.texte, demoi && styles.texteMoi]}>{m.body}</Text>
-                  <Text style={[styles.heure, demoi && styles.heureMoi]}>
-                    {heure(m.created_at)}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        {erreur ? <Text style={styles.erreur}>{erreur}</Text> : null}
-
-        <View style={styles.saisie}>
-          <TextInput
-            value={brouillon}
-            onChangeText={setBrouillon}
-            placeholder="Écrire un message"
-            placeholderTextColor={colors.textMuted}
-            style={styles.champ}
-            multiline
-            onSubmitEditing={() => void envoyer()}
-          />
-          <Pressable
-            onPress={() => void envoyer()}
-            disabled={brouillon.trim().length === 0}
-            style={[styles.envoi, brouillon.trim().length === 0 && styles.envoiInactif]}
-          >
-            <Text style={styles.envoiTexte}>↑</Text>
-          </Pressable>
+      {decompte !== null ? (
+        <View style={styles.decompte}>
+          <Text style={styles.decompteChiffre}>{decompte}</Text>
         </View>
-      </KeyboardAvoidingView>
+      ) : (
+        <KeyboardAvoidingView
+          style={styles.corps}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            ref={defilement}
+            contentContainerStyle={styles.fil}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => defilement.current?.scrollToEnd({ animated: false })}
+          >
+            {fil.map((m) => {
+              const demoi = m.sender_id === moi;
+              return (
+                <View key={m.id} style={[styles.bulleRangee, demoi && styles.bulleRangeeMoi]}>
+                  <View style={[styles.bulle, demoi ? styles.bulleMoi : styles.bulleAutre]}>
+                    <Text style={[styles.texte, demoi && styles.texteMoi]}>{m.body}</Text>
+                    <Text style={[styles.heure, demoi && styles.heureMoi]}>
+                      {heure(m.created_at)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+
+            {finie ? (
+              <DecisionFin
+                decision={live.decision}
+                resultat={resultat}
+                enCours={live.decisionEnCours}
+                erreur={live.erreurDecision}
+                onDecider={(d) => void live.decider(d)}
+              />
+            ) : null}
+          </ScrollView>
+
+          {live.erreur ? <Text style={styles.erreur}>{live.erreur}</Text> : null}
+
+          {saisieOuverte ? (
+            <View style={styles.saisie}>
+              <TextInput
+                value={brouillon}
+                onChangeText={setBrouillon}
+                placeholder="Écrire un message"
+                placeholderTextColor={colors.textMuted}
+                style={styles.champ}
+                multiline
+                onSubmitEditing={() => void envoyer()}
+              />
+              <Pressable
+                onPress={() => void envoyer()}
+                disabled={brouillon.trim().length === 0}
+                style={[styles.envoi, brouillon.trim().length === 0 && styles.envoiInactif]}
+              >
+                <Text style={styles.envoiTexte}>↑</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 }
@@ -204,6 +204,10 @@ const styles = StyleSheet.create({
   identite: { flex: 1 },
   prenom: { ...typography.heading, color: colors.textPrimary },
   statut: { ...typography.caption, color: colors.textMuted },
+  chrono: { ...typography.chiffreMoyen, color: colors.accent },
+
+  decompte: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  decompteChiffre: { ...typography.chiffre, color: colors.accent },
 
   consigne: {
     margin: spacing.gutter,
