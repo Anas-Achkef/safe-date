@@ -15,12 +15,14 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LogoSafeDate } from '../src/components/LogoSafeDate';
-import { SessionProvider } from '../src/hooks/useSession';
+import { signalPresence } from '../src/api/conversations';
+import { SessionProvider, useSession } from '../src/hooks/useSession';
+import { isPreviewMode } from '../src/preview';
 import { installWebFrame } from '../src/lib/webFrame';
 import { colors, spacing } from '../src/theme';
 
@@ -72,6 +74,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <SessionProvider>
+          <SignalPresence />
           <StatusBar style="light" />
           <Stack
             screenOptions={{
@@ -91,6 +94,32 @@ export default function RootLayout() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
+}
+
+/**
+ * Signe de vie a l'ouverture et a chaque retour au premier plan.
+ *
+ * C'est ce qui permet au serveur de savoir qu'une personne est revenue pendant
+ * qu'une autre l'attend. Un echec est ignore : ce n'est pas un geste de
+ * l'utilisateur, et le prochain retour reessaiera.
+ */
+function SignalPresence() {
+  const { session } = useSession();
+  const connecte = Boolean(session) && !isPreviewMode;
+
+  useEffect(() => {
+    if (!connecte) return;
+    const signaler = () => {
+      signalPresence().catch(() => {});
+    };
+    signaler();
+    const abonnement = AppState.addEventListener('change', (etat) => {
+      if (etat === 'active') signaler();
+    });
+    return () => abonnement.remove();
+  }, [connecte]);
+
+  return null;
 }
 
 const styles = StyleSheet.create({
