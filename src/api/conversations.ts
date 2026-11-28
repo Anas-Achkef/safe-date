@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 import type {
   ResumeConversation,
   ChatRequestStatus,
+  ConversationStatus,
+  RejoindreResultat,
+  ReponseFin,
   DateIntent,
   DemandeRecue,
   EnvoyerMessageArgs,
@@ -12,7 +15,7 @@ import type {
 } from '../types/conversations';
 import type { RencontreType } from '../types/learning';
 import type { ScoreGroup } from '../types/rpc';
-import { toApiError } from './errors';
+import { ApiError, toApiError } from './errors';
 import { demo, isPreviewMode } from '../preview';
 
 /**
@@ -133,12 +136,30 @@ export async function proposeConversation(
   return data as string;
 }
 
-/** Signale que l'utilisateur entre dans la conversation. */
-export async function joinConversation(conversation: string): Promise<void> {
-  const { error } = await (supabase.rpc as any)('rejoindre_conversation', {
+/**
+ * Signale que l'utilisateur est sur l'ecran de la conversation.
+ *
+ * A rappeler tant que l'ecran est ouvert : le serveur ne compte une presence
+ * que quelques dizaines de secondes, et c'est la presence simultanee des deux
+ * qui fait partir le chrono.
+ */
+export async function joinConversation(
+  conversation: string,
+): Promise<RejoindreResultat | null> {
+  if (isPreviewMode) return demo.rejoindreConversation(conversation);
+  const { data, error } = await (supabase.rpc as any)('rejoindre_conversation', {
     conversation,
   });
   if (error) throw toApiError(error, 'Entree dans la conversation');
+  const rows = (data ?? []) as RejoindreResultat[];
+  return rows[0] ?? null;
+}
+
+/** Signe de vie de l'application, a chaque retour au premier plan. */
+export async function signalPresence(): Promise<void> {
+  if (isPreviewMode) return;
+  const { error } = await (supabase.rpc as any)('signaler_presence');
+  if (error) throw toApiError(error, 'Signal de presence');
 }
 
 /**
@@ -151,13 +172,19 @@ export async function loadConversationState(
   conversation: string,
 ): Promise<EtatConversation | null> {
   if (isPreviewMode) return demo.etatConversation(conversation);
-  const { data, error } = await (supabase.rpc as any)('etat_conversation', {
-    conversation,
-  });
-  if (error) throw toApiError(error, 'Etat de la conversation');
+  const [etat, ligne] = await Promise.all([
+    (supabase.rpc as any)('etat_conversation', { conversation }),
+    (supabase.from as any)('conversations')
+      .select('illimitee')
+      .eq('id', conversation)
+      .maybeSingle(),
+  ]);
+  if (etat.error) throw toApiError(etat.error, 'Etat de la conversation');
+  if (ligne.error) throw toApiError(ligne.error, 'Etat de la conversation');
 
-  const rows = (data ?? []) as EtatConversation[];
-  return rows[0] ?? null;
+  const rows = (etat.data ?? []) as Omit<EtatConversation, 'illimitee'>[];
+  if (!rows[0]) return null;
+  return { ...rows[0], illimitee: Boolean(ligne.data?.illimitee) };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -175,7 +202,9 @@ export async function loadMessages(
   conversation: string,
   depuis?: string,
 ): Promise<Message[]> {
-  if (isPreviewMode) return demo.messages(conversation);
+  if (isPreviewMode) {
+    return demo.messages(conversation).filter((m) => !depuis || m.created_at > depuis);
+  }
   // `messages` n'est pas encore dans les types generes : meme cast que pour
   // les RPC, a retirer a la prochaine regeneration de database.ts.
   let requete = (supabase.from as any)('messages')
@@ -210,22 +239,83 @@ export async function sendMessage(args: EnvoyerMessageArgs): Promise<string> {
 }
 
 /**
- * Liste mes conversations.
+ * Liste mes conversations, la plus recente d'abord.
  *
- * Aucune RPC ne rend ce service aujourd'hui : `boite_reception` ne sert que
- * les demandes et `etat_conversation` exige de connaitre l'identifiant a
- * l'avance. Il manque une fonction `mes_conversations()` cote base — voir
- * `ResumeConversation` dans `src/types/conversations.ts`.
- *
- * En attendant, l'ecran affiche une liste vide en conditions reelles plutot
- * que de tomber en erreur : le manque se voit, il ne casse rien.
+ * Aucune fonction serveur ne sert cette liste : on lit directement
+ * `conversations` (policy `p_conv_partie` : seulement les miennes), on
+ * complete chaque ligne par `etat_conversation` pour le prenom et la presence
+ * de l'autre, et on prend le dernier message de chacune en une seule lecture.
  */
 export async function listConversations(): Promise<ResumeConversation[]> {
   if (isPreviewMode) return demo.mesConversations();
-  return [];
+
+  const { data, error } = await (supabase.from as any)('conversations')
+    .select('id, status, illimitee, prete_at, started_at');
+  if (error) throw toApiError(error, 'Chargement des conversations');
+
+  const lignes = ((data ?? []) as {
+    id: string;
+    status: ConversationStatus;
+    illimitee: boolean;
+    prete_at: string;
+    started_at: string | null;
+  }[]).sort((a, b) => (b.started_at ?? b.prete_at).localeCompare(a.started_at ?? a.prete_at));
+  if (lignes.length === 0) return [];
+
+  const ids = lignes.map((l) => l.id);
+  const [etats, derniers] = await Promise.all([
+    Promise.all(
+      ids.map(async (id) => {
+        const r = await (supabase.rpc as any)('etat_conversation', { conversation: id });
+        if (r.error) throw toApiError(r.error, 'Chargement des conversations');
+        return ((r.data ?? []) as Omit<EtatConversation, 'illimitee'>[])[0] ?? null;
+      }),
+    ),
+    (supabase.from as any)('messages')
+      .select('conversation_id, body, created_at')
+      .in('conversation_id', ids)
+      .order('created_at', { ascending: false }),
+  ]);
+  if (derniers.error) throw toApiError(derniers.error, 'Chargement des conversations');
+
+  const dernierPar = new Map<string, { body: string | null; created_at: string }>();
+  for (const m of (derniers.data ?? []) as { conversation_id: string; body: string | null; created_at: string }[]) {
+    if (!dernierPar.has(m.conversation_id)) dernierPar.set(m.conversation_id, m);
+  }
+
+  return lignes.flatMap((l, i) => {
+    const e = etats[i];
+    if (!e) return [];
+    const dernier = dernierPar.get(l.id);
+    return [
+      {
+        conversation_id: l.id,
+        autre: e.autre,
+        prenom_autre: e.prenom_autre,
+        age_autre: null,
+        photo_autre: null,
+        autre_en_ligne: e.autre_en_ligne,
+        statut: l.status,
+        dernier_message: dernier?.body ?? null,
+        dernier_au: dernier?.created_at ?? null,
+        illimitee: Boolean(l.illimitee),
+        secondes_restantes: e.secondes_restantes,
+      },
+    ];
+  });
 }
 
-/** Marque un fil comme lu a son ouverture. */
-export async function markConversationRead(conversation: string): Promise<void> {
-  if (isPreviewMode) return demo.marquerLu(conversation);
+/**
+ * Reponse a « Souhaitez-vous vous voir ? ».
+ *
+ * La fonction serveur qui l'enregistre arrive a l'etape 2 : hors apercu, on
+ * le dit plutot que d'ecrire directement dans `conversation_decisions`, qui
+ * n'est pas une table ouverte a l'ecriture selon les regles du projet.
+ */
+export async function decideConversation(
+  conversation: string,
+  decision: ReponseFin,
+): Promise<void> {
+  if (isPreviewMode) return demo.deciderConversation(conversation, decision);
+  throw new ApiError('missing_function', 'Enregistrement de la décision', null);
 }

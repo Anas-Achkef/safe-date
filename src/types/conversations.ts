@@ -76,7 +76,31 @@ export interface EtatConversation {
   secondes_restantes: number | null;
   /** Consigne du serveur a afficher tel quel, ou `null`. */
   message: string | null;
+  /**
+   * Lu dans `conversations`, pas dans `etat_conversation` : une conversation
+   * rouverte apres un rendez-vous n'a ni chrono ni verrouillage.
+   */
+  illimitee: boolean;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  rejoindre_conversation(conversation uuid)                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Retour de `rejoindre_conversation`. `demarree` ne vaut vrai qu'a l'appel qui
+ * fait partir le chrono : l'ecran affiche alors un decompte de `decompte_s`.
+ */
+export interface RejoindreResultat {
+  statut: ConversationStatus;
+  demarree: boolean;
+  attend_qui: string | null;
+  decompte_s: number;
+  secondes_restantes: number | null;
+}
+
+/** Reponse a « Souhaitez-vous vous voir ? ». « Plus tard » n'est pas proposé. */
+export type ReponseFin = 'oui' | 'non';
 
 /* -------------------------------------------------------------------------- */
 /*  public.messages                                                           */
@@ -116,13 +140,10 @@ export interface EnvoyerMessageArgs {
 /**
  * Resume d'une conversation, tel qu'une liste en a besoin.
  *
- * Aucune RPC ne renvoie aujourd'hui la liste des conversations de
- * l'utilisateur : `boite_reception` ne sert que les demandes, et
- * `etat_conversation` exige de connaitre l'identifiant a l'avance. Il manque
- * donc une fonction `mes_conversations()` renvoyant ces colonnes.
- *
- * Tant qu'elle n'existe pas, `listConversations` ne fonctionne qu'en mode
- * apercu, et l'ecran affiche un etat vide en conditions reelles.
+ * Construit cote application : lecture directe de `conversations` et de
+ * `messages` (policies `p_conv_partie` et `p_msg_partie`), completee par
+ * `etat_conversation` pour le prenom et la presence de l'autre. L'age et la
+ * photo de l'autre ne sont lisibles par aucune de ces sources : `null`.
  */
 export interface ResumeConversation {
   conversation_id: string;
@@ -135,8 +156,8 @@ export interface ResumeConversation {
   /** Extrait du dernier message, deja tronque par le serveur. */
   dernier_message: string | null;
   dernier_au: string | null;
-  /** Nombre de messages non lus. */
-  non_lus: number;
+  /** Conversation rouverte apres un rendez-vous : ni chrono ni verrouillage. */
+  illimitee: boolean;
   secondes_restantes: number | null;
 }
 

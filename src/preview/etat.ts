@@ -2,10 +2,13 @@ import type { DiscoveryEntry } from '../api/discovery';
 import { distanceMetres, SEUIL_REVELATION_M, type Coordonnees } from '../lib/geo';
 import type {
   ChatRequestStatus,
+  ConversationStatus,
   DateIntent,
   DemandeRecue,
   EtatConversation,
   Message,
+  RejoindreResultat,
+  ReponseFin,
   ResumeConversation,
   ResumeRendezVous,
 } from '../types/conversations';
@@ -209,8 +212,21 @@ export function acceptees(): number {
 /** Identifiant de l'utilisateur en demonstration. */
 export const MOI = 'moi';
 
+/**
+ * Un fil de demonstration. Le temps y est reel : `finA` est l'instant ou les
+ * 5 minutes s'achevent, et le statut en decoule a chaque lecture, comme le
+ * ferait le serveur.
+ */
 interface Fil {
-  resume: ResumeConversation;
+  id: string;
+  personne: Personne;
+  statut: ConversationStatus;
+  enLigne: boolean;
+  illimitee: boolean;
+  /** Vrai si le prochain `rejoindreConversation` fait partir le chrono. */
+  demarrable: boolean;
+  finA: number | null;
+  decision: ReponseFin | null;
   messages: Message[];
 }
 
@@ -229,124 +245,184 @@ const msg = (conv: string, de: string, corps: string, minutes: number): Message 
   created_at: horodatage(minutes),
 });
 
+const DECOMPTE_S = 3;
+const DUREE_S = 300;
+
 function fil(
   id: string,
-  p: Personne,
-  statut: ResumeConversation['statut'],
-  enLigne: boolean,
-  nonLus: number,
-  secondes: number | null,
+  personne: Personne,
+  etat: Partial<Omit<Fil, 'id' | 'personne' | 'messages'>>,
   echanges: [string, string, number][],
 ): Fil {
-  const messages = echanges.map(([de, corps, min]) =>
-    msg(id, de === 'moi' ? MOI : p.id, corps, min),
-  );
-  const dernier = messages[messages.length - 1];
   return {
-    resume: {
-      conversation_id: id,
-      autre: p.id,
-      prenom_autre: p.prenom,
-      age_autre: p.age,
-      photo_autre: photoDemo(p.id),
-      autre_en_ligne: enLigne,
-      statut,
-      dernier_message: dernier?.body ?? null,
-      dernier_au: dernier?.created_at ?? null,
-      non_lus: nonLus,
-      secondes_restantes: secondes,
-    },
-    messages,
+    id,
+    personne,
+    statut: 'prete',
+    enLigne: false,
+    illimitee: false,
+    demarrable: false,
+    finA: null,
+    decision: null,
+    ...etat,
+    messages: echanges.map(([de, corps, min]) =>
+      msg(id, de === 'moi' ? MOI : personne.id, corps, min),
+    ),
   };
 }
 
 const P = (i: number) => PERSONNES[i];
+const dans = (secondes: number) => Date.now() + secondes * 1000;
 
 let fils: Fil[] = [
-  fil('conv-1', P(18), 'active', true, 2, 82800, [
-    ['autre', 'Bonsoir Alex. Votre phrase sur la confiance qui se construit lentement m’a arrêté.', 240],
-    ['moi', 'Merci. C’est une des rares choses dont je suis certain.', 232],
-    ['autre', 'On m’a souvent reproché l’inverse — de décider trop vite.', 210],
-    ['autre', 'Vous cuisinez vraiment tous les soirs ?', 12],
-    ['moi', 'Presque. Ce soir c’était des pâtes, je ne vais pas mentir.', 9],
-    ['autre', 'C’est déjà mieux que moi. Vous seriez libre jeudi ?', 4],
+  // L'autre est la : entrer dans la conversation fait partir le chrono.
+  fil('conv-5', P(3), { enLigne: true, demarrable: true }, []),
+  fil('conv-1', P(18), { statut: 'active', enLigne: true, finA: dans(240) }, [
+    ['autre', 'Bonsoir Alex. Votre phrase sur la confiance qui se construit lentement m’a arrêté.', 3],
+    ['moi', 'Merci. C’est une des rares choses dont je suis certain.', 2],
+    ['autre', 'Vous cuisinez vraiment tous les soirs ?', 1],
   ]),
-  fil('conv-2', P(19), 'active', false, 0, 43200, [
-    ['moi', 'Bonjour Lou. Le théâtre, c’est depuis longtemps ?', 1500],
-    ['autre', 'Depuis mes douze ans. C’est ce qui m’a appris à écouter, bizarrement.', 1440],
-    ['moi', 'Ça se voit dans vos réponses.', 1380],
+  // Presque fini : de quoi voir le temps s'ecouler et la question de fin.
+  fil('conv-4', P(5), { statut: 'active', enLigne: true, finA: dans(47) }, [
+    ['autre', 'Il nous reste peu de temps, alors je me lance : vous aimez marcher ?', 4],
+    ['moi', 'Beaucoup. Surtout le dimanche matin.', 3],
   ]),
-  fil('conv-3', P(2), 'prete', false, 1, 172800, [
-    ['autre', 'Bonjour. On a le même rapport aux trajectoires différentes, apparemment.', 60],
+  // L'autre n'est pas la : la conversation attend.
+  fil('conv-3', P(2), {}, []),
+  fil('conv-6', P(7), { statut: 'verrouillee' }, [
+    ['moi', 'C’était court mais j’ai bien aimé.', 30],
+    ['autre', 'Moi aussi. On verra ce que l’on répond !', 29],
+  ]),
+  // Rouverte apres un rendez-vous : ni chrono ni verrouillage.
+  fil('conv-2', P(19), { statut: 'active', illimitee: true }, [
+    ['moi', 'Merci pour hier soir, vraiment.', 1500],
+    ['autre', 'Merci à vous. On remet ça la semaine prochaine ?', 1440],
   ]),
 ];
 
+/** Fait avancer le temps : une conversation dont les 5 minutes sont passees se verrouille. */
+function actualiser(f: Fil): Fil {
+  if (f.statut === 'active' && !f.illimitee && f.finA !== null && f.finA <= Date.now()) {
+    return { ...f, statut: 'verrouillee' };
+  }
+  return f;
+}
+
+function trouver(id: string): Fil | undefined {
+  fils = fils.map(actualiser);
+  return fils.find((x) => x.id === id);
+}
+
+function remplacer(id: string, maj: (f: Fil) => Fil): void {
+  fils = fils.map((f) => (f.id === id ? maj(f) : f));
+}
+
+function secondesRestantes(f: Fil): number | null {
+  if (f.statut !== 'active' || f.illimitee || f.finA === null) return null;
+  return Math.max(0, Math.ceil((f.finA - Date.now()) / 1000));
+}
+
+const CONSIGNE: Record<ConversationStatus, string> = {
+  prete: 'Votre conversation est prête. Nous attendons que vous soyez tous les deux disponibles.',
+  active: 'Conversation en cours.',
+  verrouillee: 'Le temps est écoulé.',
+  cloturee: 'Conversation close.',
+};
+
 export function mesConversations(): ResumeConversation[] {
-  return fils.map((f) => f.resume);
+  fils = fils.map(actualiser);
+  return fils.map((f) => {
+    const dernier = f.messages[f.messages.length - 1];
+    return {
+      conversation_id: f.id,
+      autre: f.personne.id,
+      prenom_autre: f.personne.prenom,
+      age_autre: f.personne.age,
+      photo_autre: photoDemo(f.personne.id),
+      autre_en_ligne: f.enLigne,
+      statut: f.statut,
+      dernier_message: dernier?.body ?? null,
+      dernier_au: dernier?.created_at ?? null,
+      illimitee: f.illimitee,
+      secondes_restantes: secondesRestantes(f),
+    };
+  });
 }
 
 export function etatConversation(id: string): EtatConversation | null {
-  const f = fils.find((x) => x.resume.conversation_id === id);
+  const f = trouver(id);
   if (!f) return null;
   return {
-    statut: f.resume.statut,
-    autre: f.resume.autre,
-    prenom_autre: f.resume.prenom_autre,
-    autre_en_ligne: f.resume.autre_en_ligne,
-    secondes_restantes: f.resume.secondes_restantes,
-    message:
-      f.resume.statut === 'prete'
-        ? 'La conversation est ouverte. À vous d’écrire le premier message.'
-        : null,
+    statut: f.statut,
+    autre: f.personne.id,
+    prenom_autre: f.personne.prenom,
+    autre_en_ligne: f.enLigne,
+    secondes_restantes: secondesRestantes(f),
+    message: f.illimitee ? null : CONSIGNE[f.statut],
+    illimitee: f.illimitee,
+  };
+}
+
+export function rejoindreConversation(id: string): RejoindreResultat | null {
+  const f = trouver(id);
+  if (!f) return null;
+  if (f.statut === 'prete' && f.demarrable) {
+    remplacer(id, (x) => ({
+      ...x,
+      statut: 'active',
+      demarrable: false,
+      finA: dans(DECOMPTE_S + DUREE_S),
+    }));
+    return {
+      statut: 'active',
+      demarree: true,
+      attend_qui: null,
+      decompte_s: DECOMPTE_S,
+      secondes_restantes: DUREE_S,
+    };
+  }
+  return {
+    statut: f.statut,
+    demarree: false,
+    attend_qui: f.statut === 'prete' ? f.personne.id : null,
+    decompte_s: 0,
+    secondes_restantes: secondesRestantes(f),
   };
 }
 
 export function messages(id: string): Message[] {
-  return fils.find((x) => x.resume.conversation_id === id)?.messages ?? [];
-}
-
-/** Ouvrir un fil marque ses messages comme lus. */
-export function marquerLu(id: string): void {
-  fils = fils.map((f) =>
-    f.resume.conversation_id === id ? { ...f, resume: { ...f.resume, non_lus: 0 } } : f,
-  );
+  return trouver(id)?.messages ?? [];
 }
 
 export function envoyerMessage(id: string, corps: string): string {
+  const f = trouver(id);
+  if (!f || f.statut !== 'active') {
+    throw new Error('Cette conversation est verrouillée');
+  }
   const envoye = msg(id, MOI, corps, 0);
-  fils = fils.map((f) =>
-    f.resume.conversation_id === id
-      ? {
-          ...f,
-          messages: [...f.messages, envoye],
-          resume: {
-            ...f.resume,
-            statut: 'active',
-            dernier_message: corps,
-            dernier_au: envoye.created_at,
-            non_lus: 0,
-          },
-        }
-      : f,
-  );
+  remplacer(id, (x) => ({ ...x, messages: [...x.messages, envoye] }));
   return envoye.id;
+}
+
+/** En demonstration, l'autre repond toujours « oui ». */
+export function deciderConversation(id: string, decision: ReponseFin): void {
+  remplacer(id, (x) => ({ ...x, decision }));
+}
+
+export function decisionDe(id: string): ReponseFin | null {
+  return trouver(id)?.decision ?? null;
 }
 
 /**
  * Accepter une demande ouvre une conversation.
  *
  * C'est ce qui relie les deux moities de l'onglet : sans cela, une demande
- * acceptee disparaitrait sans rien produire.
+ * acceptee disparaitrait sans rien produire. L'autre est la : entrer dans la
+ * conversation fait partir le chrono.
  */
 function ouvrirConversationDepuis(demande: DemandeRecue): void {
   const personne = PERSONNES.find((p) => p.id === demande.emetteur);
-  if (!personne || fils.some((f) => f.resume.autre === demande.emetteur)) return;
-  fils = [
-    fil(`conv-${demande.demande_id}`, personne, 'prete', false, 0, 172800, [
-      ['autre', 'Merci d’avoir accepté. Par quoi commence-t-on ?', 0],
-    ]),
-    ...fils,
-  ];
+  if (!personne || fils.some((f) => f.personne.id === demande.emetteur)) return;
+  fils = [fil(`conv-${demande.demande_id}`, personne, { enLigne: true, demarrable: true }, []), ...fils];
 }
 
 /* -------------------------------------------------------------------------- */
