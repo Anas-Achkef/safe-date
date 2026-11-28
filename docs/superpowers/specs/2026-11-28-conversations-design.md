@@ -34,7 +34,7 @@ Décidé avec le responsable du projet :
    minutes d'échange en direct. C'est le mécanisme de présence conjointe déjà
    en base (`rejoindre_conversation`, migration M10).
 6. À la fin, la conversation se **verrouille** pour les deux au même instant, et
-   chacun répond à « Souhaitez-vous vous voir ? » (oui, non, plus tard).
+   chacun répond à « Souhaitez-vous vous voir ? » : oui ou non.
 
 Si l'un ne revient pas, rien n'est perdu : l'autre peut repartir et sera
 prévenu au retour suivant. La limite reste la péremption de 48 h d'une
@@ -65,9 +65,10 @@ parcours ne tient pas.
 
 Ce qui ferait échouer le projet même si tout « marche » :
 
-- **Les messages d'avant le chrono deviennent une messagerie libre.** Le
-  format des 5 minutes perdrait son sens. Voir « Limite des messages avant le
-  chrono ».
+- **On ne passe jamais aux 5 minutes.** Les messages d'avant le chrono sont
+  illimités (choix du responsable) : l'écran doit toujours montrer que la
+  vraie rencontre se fait dans les 5 minutes en direct, et inviter à les
+  lancer dès que les deux sont là.
 - **Une notification révèle autre chose que le prénom.** Les notifications
   s'affichent sur l'écran verrouillé : ni contenu de message, ni photo, ni
   score.
@@ -142,12 +143,16 @@ Trois fichiers, appliqués dans cet ordre par le responsable.
   `created_at`, `revoked_at`). Écriture par une RPC `enregistrer_appareil(token,
   plateforme)` qui lit `auth.uid()` ; aucune lecture côté application.
 - Table `push_outbox` : `id`, `user_id` destinataire, `type`
-  (`premier_message`, `reponse`, `autre_arrive`), `conversation_id`,
+  (`premier_message`, `reponse`, `nouveau_message`, `autre_arrive`), `conversation_id`,
   `created_at`, `sent_at`, `erreur`. Fermée par RLS.
 - Écriture dans la boîte d'envoi par les fonctions du serveur, aux trois
   moments : premier message de A (→ B), premier message de B (→ A), et
   `rejoindre_conversation` quand l'autre est absent et que les deux ont écrit
   (→ l'autre).
+- Les messages suivants, avant le chrono, déclenchent une notification
+  `nouveau_message` (« Camille vous a écrit. ») seulement si le destinataire
+  est absent, et au plus une par conversation toutes les 10 minutes : avec
+  des messages illimités, une notification par message serait une rafale.
 - **Anti-rafale** : au plus une notification `autre_arrive` par conversation
   et par destinataire toutes les 10 minutes (paramètre dans `engine_params`).
 - Textes, prénom seul, jamais de contenu :
@@ -180,13 +185,15 @@ champs. **`src/api/notifications.ts`** (nouveau) : `registerDevice()`.
 | Étape | Ce que voit la personne |
 |---|---|
 | Prête, personne n'a écrit | « Écrivez le premier message à Camille. » Zone de saisie ouverte. |
-| J'ai écrit, l'autre non | Mon message, puis « Camille sera prévenue. Vous pouvez quitter l'application. » Saisie fermée. |
+| J'ai écrit, l'autre non | Mon message, puis « Camille sera prévenue. Vous pouvez quitter l'application. » Saisie toujours ouverte. |
 | L'autre a écrit, pas moi | Son message, saisie ouverte : « Répondez pour préparer vos 5 minutes. » |
-| Les deux ont écrit, l'autre absent | « Camille va être prévenue. Restez ici ou revenez quand vous voulez. » |
+| Les deux ont écrit, l'autre absent | Le fil, saisie ouverte, et « Vos 5 minutes démarreront quand vous serez là tous les deux. Camille sera prévenue. » |
 | Les deux présents | Décompte 3, 2, 1. |
 | Active | Fil en direct, compte à rebours en minutes et secondes, servi par le serveur. |
-| Verrouillée | « Le temps est écoulé », puis la question « Souhaitez-vous vous voir ? » : Oui, Non, Plus tard. |
-| Décision prise | « Votre réponse est enregistrée. » Celle de l'autre n'est jamais montrée avant que les deux aient répondu. |
+| Verrouillée | « Le temps est écoulé », puis la question « Souhaitez-vous vous voir ? » : Oui ou Non. |
+| J'ai répondu, l'autre non | « Votre réponse est enregistrée. » Celle de l'autre n'est jamais montrée. |
+| Oui et oui | « C'est réciproque ! », puis le parcours Rendez-vous (hors périmètre). |
+| Réponses différentes ou non et non | « Ce ne sera pas pour cette fois. » Même message pour les deux : on ne révèle jamais qui a dit non. |
 
 Tant que l'écran est ouvert : `rejoindre_conversation` toutes les 15 s
 (présence), état et nouveaux messages toutes les 3 s en `active`, toutes les
@@ -219,6 +226,9 @@ par son propriétaire. Ce n'est pas l'une des trois exceptions vérifiées de
 2. Propositions SQL `messages-avant-chrono` et `mes_conversations`, puis
    l'application qui les utilise.
 3. Notifications : SQL, Edge Function, build de développement, application.
+   **Attend la création des comptes Expo et Apple.** D'ici là, les étapes de
+   l'écran qui parlent de « sera prévenu(e) » disent seulement « Revenez plus
+   tard, votre conversation vous attend ».
 
 Chaque étape est livrable seule.
 
@@ -254,7 +264,14 @@ Chaque étape est livrable seule.
 
 ## Points ouverts
 
-- **Limite des messages avant le chrono** : combien de messages chacun peut
-  envoyer avant que les 5 minutes commencent.
 - Comportement d'Expo Go sur iOS avec le SDK 57 pour les notifications.
-- Écriture directe dans `conversation_decisions` ou RPC.
+- Comptes Expo (EAS) et développeur Apple : pas encore créés. L'étape 3 de
+  livraison attend ces comptes.
+
+## Réponses du responsable (28 novembre)
+
+- **Messages avant le chrono : illimités.**
+- **Question de fin : oui ou non**, « plus tard » est retiré. La RPC de
+  décision refuse `plus_tard` même si l'énumération `date_intent` le contient.
+- **Comptes Expo et Apple : pas encore.** Les étapes 1 et 2 se font sans
+  eux ; l'étape 3 attend.
